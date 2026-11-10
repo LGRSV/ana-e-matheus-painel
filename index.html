@@ -1,0 +1,1117 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Painel · Ana Caroline e Matheus</title>
+<meta name="theme-color" content="#0f141a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Painel A&amp;M">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230f141a'/%3E%3Ctext x='32' y='41' font-family='Georgia,serif' font-size='24' fill='%23e9e1d6' text-anchor='middle'%3EA%26amp;M%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
+<style>
+  :root{
+    --bg:#faf7f3; --bg2:#f2ece4; --ink:#3b3631; --soft:#6f655b; --taupe:#b3a597; --accent:#8a7764;
+    --dark:#0f141a; --dark2:#1a222b; --line:#ddd3c7; --ok:#3d5a36; --okbg:#eef3ec; --err:#8a3b2f; --errbg:#f8ecea;
+    --serif:"Cormorant Garamond", Georgia, serif; --sans:"Quicksand", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0; min-height:100vh; background:var(--bg); color:var(--ink); font:400 16px/1.55 var(--sans); -webkit-font-smoothing:antialiased}
+  [hidden]{display:none !important}
+  a{color:var(--accent)}
+  button, input, select, textarea{font:inherit; color:inherit}
+  .mono{display:block; color:#fff}
+
+  /* entrada */
+  .entrada{min-height:100vh; min-height:100dvh; background:var(--dark); color:#fff; display:grid; place-items:center;
+           padding:max(32px, env(safe-area-inset-top)) 16px max(32px, env(safe-area-inset-bottom))}
+  .cartao{width:100%; max-width:380px; text-align:center}
+  .cartao .mono{width:92px; height:92px; margin:0 auto 10px}
+  .cartao h1{font:400 34px/1.15 var(--serif); margin:0}
+  .cartao .sub{margin:6px 0 26px; color:#aab3bb; font-size:14px; letter-spacing:.06em}
+  .cartao form{display:grid; gap:14px; text-align:left; background:var(--dark2); border:1px solid #2b3540; border-radius:18px; padding:22px 18px}
+  .cartao label{display:grid; gap:6px; font-size:13px; font-weight:600; letter-spacing:.03em; color:#d7dde2}
+  .cartao input{width:100%; min-height:48px; padding:12px 14px; border-radius:12px; border:1px solid #33404c; background:#0f141a; color:#fff; font-size:16px}
+  .cartao input:focus{outline:2px solid #b3a597; outline-offset:1px}
+  .cartao .ajuda{font-size:13px; color:#aab3bb; margin:0}
+  .linkbtn{background:none; border:0; padding:8px 0; color:#d8cbbd; text-decoration:underline; cursor:pointer; font-size:14px; font-weight:500}
+  .rodape-entrada{margin-top:18px; font-size:13px}
+  .rodape-entrada a{color:#aab3bb}
+
+  /* botões */
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:44px; padding:10px 18px; border-radius:999px;
+       border:1px solid var(--accent); background:transparent; color:var(--accent); font:600 14px/1.1 var(--sans); letter-spacing:.02em;
+       cursor:pointer; text-decoration:none; white-space:nowrap}
+  .btn.cheio{background:var(--accent); color:#fff}
+  .btn.claro{background:#e9e1d6; border-color:#e9e1d6; color:var(--dark)}
+  .btn.perigo{border-color:#c9a59d; color:var(--err)}
+  .btn.peq{min-height:36px; padding:6px 14px; font-size:13px}
+  .btn[disabled]{opacity:.55; cursor:progress}
+  .btn svg{width:16px; height:16px; flex:none}
+
+  .aviso{margin:0; padding:11px 13px; border-radius:10px; font-size:14px; line-height:1.45}
+  .aviso.ok{background:var(--okbg); color:var(--ok)}
+  .aviso.erro{background:var(--errbg); color:var(--err)}
+
+  /* app */
+  .topo{position:sticky; top:0; z-index:20; background:var(--dark); color:#fff; padding:env(safe-area-inset-top) 0 0}
+  .topo .barra{max-width:1040px; margin:0 auto; display:flex; align-items:center; gap:12px; padding:10px 16px}
+  .topo .mono{width:42px; height:42px; flex:none}
+  .topo .titulo{flex:1; min-width:0}
+  .topo .titulo b{display:block; font:400 22px/1.1 var(--serif)}
+  .topo .titulo small{display:block; color:#aab3bb; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .topo a.site{color:#d8cbbd; font-size:13px; font-weight:600; text-decoration:none; border:1px solid #3a4652; border-radius:999px; padding:8px 12px; white-space:nowrap}
+  .abas{max-width:1040px; margin:0 auto; display:flex; gap:2px; padding:0 8px; overflow-x:auto; scrollbar-width:none}
+  .abas::-webkit-scrollbar{display:none}
+  .abas button{background:none; border:0; color:#aab3bb; padding:12px 12px 13px; font-weight:600; font-size:14px; cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap}
+  .abas button[aria-selected="true"]{color:#fff; border-bottom-color:#b3a597}
+
+  main{max-width:1040px; margin:0 auto; padding:18px 16px calc(40px + env(safe-area-inset-bottom))}
+  h2{font:400 28px/1.2 var(--serif); margin:6px 0 14px}
+  h3{font:600 15px/1.3 var(--sans); margin:0 0 10px}
+
+  .numeros{display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:20px}
+  .numeros div{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 14px 12px}
+  .numeros b{display:block; font:500 36px/1 var(--serif); font-variant-numeric:lining-nums tabular-nums}
+  .numeros small{display:block; margin-top:6px; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--soft); font-weight:600}
+  .numeros .destaque{background:var(--dark); border-color:var(--dark); color:#fff; grid-column:1 / -1}
+  .numeros .destaque small{color:#aab3bb}
+
+  .ferramentas{display:grid; gap:10px; margin-bottom:14px}
+  .busca{width:100%; min-height:46px; padding:11px 14px; border-radius:12px; border:1px solid var(--line); background:#fff; font-size:16px}
+  .linha{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+  .seg{display:inline-flex; background:var(--bg2); border-radius:999px; padding:3px}
+  .seg button{border:0; background:none; border-radius:999px; padding:8px 13px; font-weight:600; font-size:13px; color:var(--soft); cursor:pointer; min-height:36px}
+  .seg button[aria-pressed="true"]{background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.12)}
+  select{min-height:40px; border-radius:10px; border:1px solid var(--line); background:#fff; padding:6px 10px; font-size:14px}
+  .acoes{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px}
+  .contador{font-size:13px; color:var(--soft); margin:0 0 10px}
+
+  .lista{display:grid; gap:10px}
+  .item{background:#fff; border:1px solid var(--line); border-radius:14px; padding:14px 14px 12px; display:grid; gap:6px}
+  .item .cab{display:flex; align-items:flex-start; gap:10px}
+  .item .nome{flex:1; font-weight:700; font-size:16px; line-height:1.3; word-break:break-word}
+  .selo{flex:none; font-size:12px; font-weight:700; border-radius:999px; padding:3px 10px}
+  .selo.sim{background:var(--okbg); color:var(--ok)}
+  .selo.nao{background:var(--errbg); color:var(--err)}
+  .item .det{display:flex; flex-wrap:wrap; gap:4px 14px; font-size:14px; color:var(--soft)}
+  .item .det a{color:var(--accent); font-weight:600}
+  .item .msg{font-size:14px; background:var(--bg); border-radius:10px; padding:8px 10px; white-space:pre-wrap; word-break:break-word; margin:2px 0}
+  .item .pe{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--soft)}
+  .item .pe span{flex:1}
+  .vazio{text-align:center; color:var(--soft); padding:28px 12px; background:#fff; border:1px dashed var(--line); border-radius:14px}
+
+  .painel-form{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; display:grid; gap:12px; margin-bottom:14px}
+  .painel-form label{display:grid; gap:5px; font-size:13px; font-weight:600}
+  .painel-form input, .painel-form textarea{width:100%; min-height:44px; border:1px solid var(--line); border-radius:10px; padding:10px 12px; background:var(--bg); font-size:16px}
+  .painel-form textarea{min-height:80px; resize:vertical}
+  .dupla{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .ops{display:flex; gap:8px}
+  .ops label{flex:1; display:flex; align-items:center; gap:8px; border:1px solid var(--line); border-radius:10px; padding:10px 12px; font-weight:600; cursor:pointer}
+  .ops input{width:auto; min-height:0; accent-color:var(--accent)}
+  .nota{font-size:13px; color:var(--soft); margin:0}
+
+  .fotos{display:grid; gap:16px}
+  .foto{background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden}
+  .foto .quadro{position:relative; background:var(--bg2); aspect-ratio:4 / 3}
+  .foto .quadro img{width:100%; height:100%; object-fit:cover; display:block}
+  .foto[data-chave=capa] .quadro img{object-position:50% 8%}
+  .foto .quadro .etiqueta{position:absolute; left:10px; top:10px; background:rgba(15,20,26,.78); color:#fff; font-size:12px; font-weight:600; border-radius:999px; padding:4px 10px}
+  .foto .corpo{padding:14px; display:grid; gap:10px}
+  .foto .corpo p{margin:0; font-size:14px; color:var(--soft)}
+
+  .conta{display:grid; gap:16px; max-width:460px}
+
+  .cartao-claro{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:12px}
+  .cartao-claro h3 small{font-weight:500; color:var(--soft)}
+  .grafico{position:relative; height:150px; display:flex; align-items:flex-end; gap:3px; border-bottom:1px solid var(--line); padding-top:22px}
+  .grafico .barra{flex:1; min-width:0; height:100%; display:flex; align-items:flex-end; cursor:pointer; background:none; border:0; padding:0}
+  .grafico .barra i{display:block; width:100%; max-width:12px; margin:0 auto; background:var(--accent); border-radius:3px 3px 0 0; min-height:1px}
+  .grafico .barra.zero i{background:var(--line)}
+  .grafico .barra.hoje i{background:var(--dark)}
+  .grafico .barra:hover i, .grafico .barra.ativa i{filter:brightness(1.25)}
+  .grafico .max{position:absolute; left:0; top:0; font-size:11px; color:var(--soft)}
+  .grafico .tip{position:absolute; top:0; transform:translateX(-50%); background:var(--dark); color:#fff; font-size:12px; font-weight:600;
+                padding:3px 8px; border-radius:6px; white-space:nowrap; pointer-events:none}
+  .eixo{display:flex; justify-content:space-between; font-size:11px; color:var(--soft); margin-top:4px}
+  .dica{font-size:12px; color:var(--soft); margin:8px 0 0}
+  .divisao{display:flex; height:14px; border-radius:999px; overflow:hidden; background:var(--bg2)}
+  .divisao span{display:block; height:100%}
+  .legenda{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px}
+  .legenda i{display:inline-block; width:10px; height:10px; border-radius:3px; margin-right:6px; vertical-align:0}
+  .pix-grade{display:grid; gap:12px}
+  .previa-pix{text-align:center}
+  .previa-pix .qr{width:220px; max-width:100%; margin:0 auto 10px}
+  .previa-pix .qr svg{display:block; width:100%; height:auto}
+
+  .carregando{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--dark); color:#fff;
+              padding:10px 18px; border-radius:999px; font-size:14px; font-weight:600; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,.25); max-width:calc(100% - 32px); text-align:center}
+
+  @media (min-width:720px){
+    .numeros{grid-template-columns:repeat(5, 1fr)}
+    .numeros .destaque{grid-column:auto}
+    .ferramentas{grid-template-columns:1fr auto}
+    .fotos{grid-template-columns:1fr 1fr}
+    .pix-grade{grid-template-columns:1.2fr 1fr; align-items:start}
+    .lista.recados{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="mono" viewBox="0 0 120 120"><g fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path transform="translate(60.0 14.0) scale(1.35)" d="M0 3.6C-5.6-.4-4.6-5.6-1.6-5.2-.6-5 0-4.2 0-3.4 0-4.2.6-5 1.6-5.2 4.6-5.6 5.6-.4 0 3.6Z" fill="currentColor" stroke="none"/><path d="M69.6 15.0A46 46 0 0 1 105.2 68.8"/><path d="M73.4 16.0l-2.8 -5.2"/><path d="M73.4 16.0l-5.2 2.8"/><path d="M78.0 17.7l-2.2 -5.5"/><path d="M78.0 17.7l-5.5 2.2"/><path d="M82.3 19.8l-1.6 -5.7"/><path d="M82.3 19.8l-5.7 1.6"/><path d="M104.2 73.7 L109.6 67.1 L101.7 65.6Z" fill="currentColor" stroke="none"/><circle cx="103.2" cy="75.7" r="2" fill="currentColor" stroke="none"/><path transform="translate(99.8 83.0) scale(1.35)" d="M0 3.6C-5.6-.4-4.6-5.6-1.6-5.2-.6-5 0-4.2 0-3.4 0-4.2.6-5 1.6-5.2 4.6-5.6 5.6-.4 0 3.6Z" fill="currentColor" stroke="none"/><path d="M94.2 90.8A46 46 0 0 1 29.8 94.7"/><path d="M91.4 93.6l5.9 0.2"/><path d="M91.4 93.6l0.2 -5.9"/><path d="M87.7 96.7l5.9 0.8"/><path d="M87.7 96.7l0.8 -5.9"/><path d="M83.7 99.4l5.8 1.4"/><path d="M83.7 99.4l1.4 -5.8"/><path d="M26.0 91.4 L29.1 99.4 L34.3 93.3Z" fill="currentColor" stroke="none"/><circle cx="24.8" cy="89.6" r="2" fill="currentColor" stroke="none"/><path transform="translate(20.2 83.0) scale(1.35)" d="M0 3.6C-5.6-.4-4.6-5.6-1.6-5.2-.6-5 0-4.2 0-3.4 0-4.2.6-5 1.6-5.2 4.6-5.6 5.6-.4 0 3.6Z" fill="currentColor" stroke="none"/><path d="M16.3 74.2A46 46 0 0 1 45.0 16.5"/><path d="M15.2 70.3l-3.1 5.0"/><path d="M15.2 70.3l5.0 3.1"/><path d="M14.3 65.6l-3.7 4.7"/><path d="M14.3 65.6l4.7 3.7"/><path d="M14.0 60.8l-4.1 4.3"/><path d="M14.0 60.8l4.3 4.1"/><path d="M49.8 14.9 L41.4 13.5 L44.0 21.1Z" fill="currentColor" stroke="none"/><circle cx="52.0" cy="14.7" r="2" fill="currentColor" stroke="none"/><text x="60" y="71" text-anchor="middle" fill="currentColor" stroke="none" font-family="Quicksand, sans-serif" font-weight="700" font-size="30" letter-spacing="-.5">A<tspan font-size="19" dx="1" dy="-1">&amp;</tspan><tspan dx="1" dy="1">M</tspan></text></g></symbol></svg>
+
+<!-- telas de entrada -->
+<div class="entrada" id="tela-entrada" hidden>
+  <div class="cartao">
+    <svg class="mono" aria-hidden="true"><use href="#mono"/></svg>
+    <h1>Painel dos noivos</h1>
+    <p class="sub">Ana Caroline &amp; Matheus · 07.01.2027</p>
+
+    <form id="f-login" novalidate>
+      <label>Usuário<input name="usuario" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required placeholder="matheus"></label>
+      <label>Senha<input name="senha" type="password" autocomplete="current-password" required></label>
+      <p class="aviso" role="alert" hidden></p>
+      <button class="btn claro" type="submit">Entrar</button>
+      <button class="linkbtn" type="button" id="ir-primeiro">Primeiro acesso / esqueci a senha</button>
+    </form>
+
+    <form id="f-primeiro" novalidate hidden>
+      <p class="ajuda">Digite o código do convite que você recebeu e escolha uma senha (mínimo de 8 caracteres). O código vale uma vez só.</p>
+      <label>Código do convite<input name="codigo" autocomplete="one-time-code" autocapitalize="characters" autocorrect="off" spellcheck="false" required></label>
+      <label>Nova senha<input name="senha" type="password" autocomplete="new-password" minlength="8" maxlength="72" required></label>
+      <label>Repita a senha<input name="senha2" type="password" autocomplete="new-password" minlength="8" maxlength="72" required></label>
+      <p class="aviso" role="alert" hidden></p>
+      <button class="btn claro" type="submit">Criar senha e entrar</button>
+      <button class="linkbtn" type="button" id="voltar-login">Voltar para entrar</button>
+    </form>
+
+    <p class="rodape-entrada"><a href="https://lgrsv.github.io/ana-e-matheus-2027/" target="_blank" rel="noopener">Ver o site do casamento</a></p>
+  </div>
+</div>
+
+<!-- painel -->
+<div id="tela-app" hidden>
+  <header class="topo">
+    <div class="barra">
+      <svg class="mono" aria-hidden="true"><use href="#mono"/></svg>
+      <div class="titulo"><b>Ana &amp; Matheus</b><small id="quem">Painel dos noivos</small></div>
+      <a class="site" href="https://lgrsv.github.io/ana-e-matheus-2027/" target="_blank" rel="noopener">Ver o site</a>
+    </div>
+    <nav class="abas" role="tablist">
+      <button role="tab" data-aba="presencas" aria-selected="true">Presenças</button>
+      <button role="tab" data-aba="recados" aria-selected="false">Recados</button>
+      <button role="tab" data-aba="visitas" aria-selected="false">Visitas</button>
+      <button role="tab" data-aba="pix" aria-selected="false">Pix</button>
+      <button role="tab" data-aba="fotos" aria-selected="false">Fotos</button>
+      <button role="tab" data-aba="conta" aria-selected="false">Conta</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="aba-presencas">
+      <div class="numeros" aria-live="polite">
+        <div class="destaque"><b id="n-pessoas">0</b><small>Pessoas confirmadas</small></div>
+        <div><b id="n-vao">0</b><small>Confirmações</small></div>
+        <div><b id="n-adultos">0</b><small>Adultos</small></div>
+        <div><b id="n-criancas">0</b><small>Crianças</small></div>
+        <div><b id="n-naovao">0</b><small>Não vão</small></div>
+      </div>
+
+      <div class="ferramentas">
+        <input class="busca" id="busca" type="search" placeholder="Buscar por nome" autocomplete="off">
+        <div class="linha">
+          <div class="seg" id="filtro" role="group" aria-label="Filtro">
+            <button type="button" data-f="todos" aria-pressed="true">Todos</button>
+            <button type="button" data-f="vao" aria-pressed="false">Vão</button>
+            <button type="button" data-f="naovao" aria-pressed="false">Não vão</button>
+          </div>
+          <select id="ordem" aria-label="Ordenar">
+            <option value="recentes">Mais recentes</option>
+            <option value="antigos">Mais antigos</option>
+            <option value="nome">Nome (A-Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="acoes">
+        <button class="btn cheio peq" type="button" id="abrir-novo">+ Adicionar</button>
+        <button class="btn peq" type="button" id="exportar">Exportar CSV</button>
+        <button class="btn peq" type="button" id="importar">Importar CSV</button>
+        <button class="btn peq" type="button" id="atualizar">Atualizar</button>
+        <input type="file" id="arquivo-csv" accept=".csv,text/csv,text/plain" hidden>
+      </div>
+
+      <form class="painel-form" id="f-novo" novalidate hidden>
+        <h3>Adicionar confirmação manualmente</h3>
+        <p class="nota">Para quem confirmou pelo casar.com, por telefone ou pessoalmente.</p>
+        <label>Nome<input name="nome" required maxlength="120"></label>
+        <div class="ops">
+          <label><input type="radio" name="vai" value="sim" checked> Vai</label>
+          <label><input type="radio" name="vai" value="nao"> Não vai</label>
+        </div>
+        <div class="dupla">
+          <label>Adultos<input name="adultos" type="number" inputmode="numeric" min="0" max="20" value="1"></label>
+          <label>Crianças<input name="criancas" type="number" inputmode="numeric" min="0" max="20" value="0"></label>
+        </div>
+        <label>Telefone (opcional)<input name="telefone" type="tel" maxlength="30"></label>
+        <label>Observação (opcional)<textarea name="mensagem" maxlength="500"></textarea></label>
+        <p class="aviso" role="alert" hidden></p>
+        <div class="linha">
+          <button class="btn cheio" type="submit">Salvar</button>
+          <button class="btn" type="button" id="cancelar-novo">Cancelar</button>
+        </div>
+      </form>
+
+      <p class="contador" id="contador"></p>
+      <div class="lista" id="lista-presencas"></div>
+    </section>
+
+    <section id="aba-recados" hidden>
+      <h2>Recados</h2>
+      <p class="contador" id="contador-recados"></p>
+      <div class="lista recados" id="lista-recados"></div>
+    </section>
+
+    <section id="aba-visitas" hidden>
+      <h2>Visitas ao site</h2>
+      <p class="nota" style="margin-bottom:14px">Aqui dá para saber quantas pessoas viram o site, mas não quem são. O nome só aparece quando a pessoa confirma presença ou deixa um recado. Visitante único = mesmo celular ou computador (aproximado).</p>
+      <div class="numeros">
+        <div class="destaque"><b id="v-unicos">0</b><small>Visitantes únicos</small></div>
+        <div><b id="v-total">0</b><small>Visualizações</small></div>
+        <div><b id="v-hoje">0</b><small>Hoje</small></div>
+        <div><b id="v-semana">0</b><small>Últimos 7 dias</small></div>
+        <div><b id="v-unicos-semana">0</b><small>Únicos em 7 dias</small></div>
+      </div>
+      <div class="cartao-claro">
+        <h3>Visualizações por dia <small>(últimos 30 dias)</small></h3>
+        <div class="grafico" id="v-grafico"></div>
+        <p class="dica" id="v-dica">Toque numa barra para ver o número do dia.</p>
+      </div>
+      <div class="cartao-claro">
+        <h3>Celular ou computador</h3>
+        <div class="divisao" id="v-divisao"></div>
+        <ul class="legenda" id="v-legenda"></ul>
+      </div>
+      <div class="linha" style="margin-top:12px"><button class="btn peq" type="button" id="v-atualizar">Atualizar</button></div>
+    </section>
+
+    <section id="aba-pix" hidden>
+      <h2>Pix para presentes</h2>
+      <p class="nota" style="margin-bottom:14px">Com a chave cadastrada, o site mostra na Lista de presentes um QR code do Pix e o botão de copia e cola. O convidado escolhe o valor no app do banco. Sem chave, essa parte não aparece no site.</p>
+      <div class="pix-grade">
+        <form class="painel-form" id="f-pix" novalidate>
+          <label>Chave Pix<input name="chave" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="77" placeholder="CPF, CNPJ, e-mail, +55 telefone ou aleatória"></label>
+          <p class="nota" id="pix-tipo"></p>
+          <label>Nome do recebedor<input name="nome" maxlength="40" placeholder="Como aparece no banco"></label>
+          <label>Cidade<input name="cidade" maxlength="30" value="PALMAS"></label>
+          <label>Mensagem no Pix (opcional)<input name="mensagem" maxlength="60" placeholder="Ex.: Presente Ana e Matheus"></label>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha">
+            <button class="btn cheio" type="submit">Salvar Pix</button>
+            <button class="btn perigo" type="button" id="pix-remover" hidden>Tirar o Pix do site</button>
+          </div>
+        </form>
+        <div class="cartao-claro previa-pix">
+          <h3>Prévia</h3>
+          <div class="qr" id="pix-qr"><p class="nota">Preencha a chave e o nome para ver o QR code.</p></div>
+          <p class="nota" id="pix-recebedor"></p>
+          <button class="btn peq" type="button" id="pix-copiar" hidden>Copiar código (para testar no app do banco)</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="aba-fotos" hidden>
+      <h2>Fotos do site</h2>
+      <p class="nota" style="margin-bottom:14px">A foto nova é reduzida aqui mesmo no celular antes de enviar. Depois de salvar, ela aparece no site na próxima vez que a página for aberta.</p>
+      <div class="fotos">
+        <div class="foto" data-chave="capa">
+          <div class="quadro"><img alt="Foto da capa"><span class="etiqueta">Capa</span></div>
+          <div class="corpo">
+            <p class="estado"></p>
+            <div class="linha">
+              <button class="btn cheio peq" type="button" data-acao="escolher">Enviar nova foto</button>
+              <button class="btn peq" type="button" data-acao="salvar" hidden>Salvar esta foto</button>
+              <button class="btn peq" type="button" data-acao="cancelar" hidden>Cancelar</button>
+              <button class="btn perigo peq" type="button" data-acao="original">Voltar à foto original</button>
+            </div>
+            <p class="aviso" role="alert" hidden></p>
+            <input type="file" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="foto" data-chave="local">
+          <div class="quadro"><img alt="Foto do local (Cabana do Lago)"><span class="etiqueta">Local · Cabana do Lago</span></div>
+          <div class="corpo">
+            <p class="estado"></p>
+            <div class="linha">
+              <button class="btn cheio peq" type="button" data-acao="escolher">Enviar nova foto</button>
+              <button class="btn peq" type="button" data-acao="salvar" hidden>Salvar esta foto</button>
+              <button class="btn peq" type="button" data-acao="cancelar" hidden>Cancelar</button>
+              <button class="btn perigo peq" type="button" data-acao="original">Voltar à foto original</button>
+            </div>
+            <p class="aviso" role="alert" hidden></p>
+            <input type="file" accept="image/*" hidden>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top:16px"><a href="https://lgrsv.github.io/ana-e-matheus-2027/" target="_blank" rel="noopener">Ver o site</a></p>
+    </section>
+
+    <section id="aba-conta" hidden>
+      <h2>Conta</h2>
+      <div class="conta">
+        <form class="painel-form" id="f-senha" novalidate>
+          <h3>Trocar senha</h3>
+          <label>Nova senha<input name="senha" type="password" autocomplete="new-password" minlength="8" maxlength="72"></label>
+          <label>Repita a senha<input name="senha2" type="password" autocomplete="new-password" minlength="8" maxlength="72"></label>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha"><button class="btn cheio" type="submit">Salvar nova senha</button></div>
+        </form>
+        <div class="linha"><button class="btn perigo" type="button" id="sair">Sair do painel</button></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="carregando" id="carregando" hidden>Carregando...</div>
+
+<script>
+(function () {
+  "use strict";
+  var SB_URL = "https://gypllpiiggmklpkqapyz.supabase.co";
+  var SB_KEY = "sb_publishable_MMlGHXZ72ginONns81RTTA_hjozOzti";
+  var DOMINIO = "painel.ana-e-matheus.app";
+  var SITE = "https://lgrsv.github.io/ana-e-matheus-2027/";
+  var PADRAO = { capa: SITE + "img/casal.webp", local: SITE + "img/cabana-do-lago-fachada.webp" };
+  var FOTOS_PUB = SB_URL + "/storage/v1/object/public/fotos/";
+  var MAX_LADO = 1600;
+
+  /* Pix estático (BR Code EMV) */
+  var Pix = (function () {
+    function semAcento(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, ""); }
+    function limpo(s, max) { return semAcento(s).replace(/[^A-Za-z0-9 .,\-]/g, "").replace(/\s+/g, " ").trim().slice(0, max).trim(); }
+    function cpfOk(d) {
+      if (!/^\d{11}$/.test(d) || /^(\d)\1+$/.test(d)) return false;
+      for (var t = 9; t < 11; t++) {
+        var s = 0; for (var i = 0; i < t; i++) s += +d[i] * (t + 1 - i);
+        if (((s * 10) % 11) % 10 !== +d[t]) return false;
+      }
+      return true;
+    }
+    function cnpjOk(d) {
+      if (!/^\d{14}$/.test(d) || /^(\d)\1+$/.test(d)) return false;
+      function dv(n) {
+        var p = n === 12 ? [5,4,3,2,9,8,7,6,5,4,3,2] : [6,5,4,3,2,9,8,7,6,5,4,3,2], s = 0;
+        for (var i = 0; i < n; i++) s += +d[i] * p[i];
+        var r = s % 11; return r < 2 ? 0 : 11 - r;
+      }
+      return dv(12) === +d[12] && dv(13) === +d[13];
+    }
+    /* devolve {tipo, chave} normalizada ou {erro} */
+    function chave(bruta) {
+      var s = String(bruta || "").trim();
+      if (!s) return { erro: "Informe a chave Pix." };
+      if (s.indexOf("@") >= 0) {
+        s = s.toLowerCase();
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s) && s.length <= 77 ? { tipo: "e-mail", chave: s } : { erro: "E-mail inválido." };
+      }
+      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s)) return { tipo: "chave aleatória", chave: s.toLowerCase() };
+      var d = s.replace(/\D/g, "");
+      if (s.charAt(0) === "+") {
+        return /^55\d{10,11}$/.test(d) ? { tipo: "telefone", chave: "+" + d } : { erro: "Telefone deve estar no formato +55 DDD número, ex.: +55 63 99999-9999." };
+      }
+      if (/[^\d.\-\/\s()]/.test(s)) return { erro: "Chave não reconhecida. Use CPF, CNPJ, e-mail, telefone (+55...) ou chave aleatória." };
+      if (d.length === 11) return cpfOk(d) ? { tipo: "CPF", chave: d } : { erro: "CPF inválido. Se for telefone, comece com +55." };
+      if (d.length === 14) return cnpjOk(d) ? { tipo: "CNPJ", chave: d } : { erro: "CNPJ inválido." };
+      if (d.length === 10 || d.length === 13) return { erro: "Se for telefone, escreva com +55 na frente, ex.: +55 63 99999-9999." };
+      return { erro: "Chave não reconhecida. Use CPF, CNPJ, e-mail, telefone (+55...) ou chave aleatória." };
+    }
+    function campo(id, v) { var n = String(v.length); return id + (n.length < 2 ? "0" + n : n) + v; }
+    function crc16(s) {
+      var crc = 0xFFFF;
+      for (var i = 0; i < s.length; i++) {
+        crc ^= s.charCodeAt(i) << 8;
+        for (var b = 0; b < 8; b++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xFFFF : (crc << 1) & 0xFFFF;
+      }
+      return ("000" + crc.toString(16).toUpperCase()).slice(-4);
+    }
+    /* dados = {chave, nome, cidade, mensagem}; devolve {payload, nome, cidade, tipo} ou {erro} */
+    function payload(dados) {
+      var k = chave(dados && dados.chave);
+      if (k.erro) return k;
+      var nome = limpo(dados.nome, 25), cidade = limpo(dados.cidade || "PALMAS", 15).toUpperCase();
+      if (nome.length < 2) return { erro: "Informe o nome do recebedor." };
+      if (!cidade) return { erro: "Informe a cidade." };
+      var conta = campo("00", "br.gov.bcb.pix") + campo("01", k.chave);
+      var msg = limpo(dados.mensagem, 99 - conta.length - 4);
+      if (msg) conta += campo("02", msg);
+      var p = campo("00", "01") + campo("26", conta) + campo("52", "0000") + campo("53", "986") + campo("58", "BR") +
+              campo("59", nome) + campo("60", cidade) + campo("62", campo("05", "***")) + "6304";
+      return { payload: p + crc16(p), nome: nome, cidade: cidade, tipo: k.tipo, chave: k.chave };
+    }
+    return { chave: chave, payload: payload, crc16: crc16 };
+  })();
+
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+
+  if (!window.supabase || !window.supabase.createClient) {
+    document.body.innerHTML = '<p style="padding:24px;font-family:sans-serif">Não foi possível carregar o painel. Verifique a internet e recarregue a página.</p>';
+    return;
+  }
+  var sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: "am2027-painel" } });
+
+  var estado = { presencas: [], recados: [], fotos: { capa: null, local: null }, filtro: "todos", busca: "", ordem: "recentes", logado: false };
+
+  /* utilidades */
+  function h(tag, attrs) {
+    var el = document.createElement(tag);
+    if (attrs) Object.keys(attrs).forEach(function (k) {
+      var v = attrs[k];
+      if (v == null || v === false) return;
+      if (k === "text") el.textContent = v;
+      else if (k.slice(0, 2) === "on") el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    });
+    for (var i = 2; i < arguments.length; i++) {
+      var c = arguments[i];
+      if (c == null || c === false) continue;
+      el.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    }
+    return el;
+  }
+  function aviso(form, tipo, txt) {
+    var p = $(".aviso", form);
+    p.className = "aviso " + (tipo || ""); p.textContent = txt || ""; p.hidden = !txt;
+  }
+  var carregandoEl = $("#carregando");
+  function carregando(txt) { carregandoEl.textContent = txt || ""; carregandoEl.hidden = !txt; }
+  var fmtData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Araguaina" });
+  function dataBR(iso) { try { return fmtData.format(new Date(iso)).replace(",", " às"); } catch (e) { return iso || ""; } }
+  function inteiro(v, min, max, padrao) { var n = parseInt(v, 10); if (isNaN(n)) n = padrao; return Math.min(max, Math.max(min, n)); }
+  function semAcento(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
+  function ocupado(btn, txt) {
+    if (txt) { btn.dataset.txt = btn.textContent; btn.textContent = txt; btn.disabled = true; }
+    else { btn.textContent = btn.dataset.txt || btn.textContent; btn.disabled = false; }
+  }
+  function msgErro(e) {
+    var m = (e && (e.message || e.error_description || e.erro)) || "";
+    if (/invalid login credentials/i.test(m)) return "Usuário ou senha incorretos.";
+    if (/email not confirmed/i.test(m)) return "Acesso ainda não liberado. Use o primeiro acesso.";
+    if (/failed to fetch|network|load failed/i.test(m)) return "Sem conexão com o servidor. Verifique a internet e tente de novo.";
+    if (/jwt|token/i.test(m)) return "Sua sessão expirou. Saia e entre de novo.";
+    if (/should be different/i.test(m)) return "A nova senha precisa ser diferente da atual.";
+    if (/password/i.test(m)) return "Senha não aceita. Use pelo menos 8 caracteres.";
+    return m ? "Erro: " + m : "Algo deu errado. Tente de novo.";
+  }
+
+  /* telas */
+  function mostrarEntrada(qual) {
+    $("#tela-app").hidden = true; $("#tela-entrada").hidden = false;
+    $("#f-login").hidden = qual === "primeiro"; $("#f-primeiro").hidden = qual !== "primeiro";
+    var alvo = qual === "primeiro" ? $("#f-primeiro").elements.codigo : $("#f-login").elements.usuario;
+    setTimeout(function () { try { alvo.focus(); } catch (e) {} }, 50);
+  }
+  function mostrarApp() { $("#tela-entrada").hidden = true; $("#tela-app").hidden = false; }
+
+  $("#ir-primeiro").addEventListener("click", function () { aviso($("#f-primeiro"), "", ""); mostrarEntrada("primeiro"); });
+  $("#voltar-login").addEventListener("click", function () { aviso($("#f-login"), "", ""); mostrarEntrada("login"); });
+
+  function emailDe(usuario) {
+    var u = String(usuario || "").trim().toLowerCase();
+    return u.indexOf("@") >= 0 ? u : u + "@" + DOMINIO;
+  }
+
+  async function entrar(email, senha) {
+    var r = await sb.auth.signInWithPassword({ email: email, password: senha });
+    if (r.error) throw r.error;
+    return r.data.session;
+  }
+
+  /* confere se é admin e abre o painel */
+  async function abrirSessao(session, formAviso) {
+    var user = session.user;
+    var r = await sb.from("admins").select("login").eq("user_id", user.id).maybeSingle();
+    if (r.error || !r.data) {
+      await sb.auth.signOut();
+      estado.logado = false;
+      mostrarEntrada("login");
+      aviso(formAviso || $("#f-login"), "erro", "Esta conta não tem acesso ao painel. Fale com quem enviou o convite.");
+      return;
+    }
+    estado.logado = true;
+    $("#quem").textContent = "Conectado como " + r.data.login;
+    mostrarApp();
+    carregarTudo();
+  }
+
+  $("#f-login").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = this.elements, btn = $("button[type=submit]", this);
+    var usuario = f.usuario.value.trim(), senha = f.senha.value;
+    if (!usuario || !senha) { aviso(this, "erro", "Preencha usuário e senha."); return; }
+    aviso(this, "", ""); ocupado(btn, "Entrando...");
+    try {
+      var s = await entrar(emailDe(usuario), senha);
+      f.senha.value = "";
+      await abrirSessao(s, this);
+    } catch (err) { aviso(this, "erro", msgErro(err)); }
+    ocupado(btn);
+  });
+
+  $("#f-primeiro").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var form = this, f = form.elements, btn = $("button[type=submit]", form);
+    var codigo = f.codigo.value.trim().toUpperCase().replace(/\s+/g, "");
+    var senha = f.senha.value, senha2 = f.senha2.value;
+    if (!codigo) { aviso(form, "erro", "Digite o código do convite."); f.codigo.focus(); return; }
+    if (senha.length < 8 || senha.length > 72) { aviso(form, "erro", "A senha precisa ter de 8 a 72 caracteres."); f.senha.focus(); return; }
+    if (senha !== senha2) { aviso(form, "erro", "As duas senhas não são iguais."); f.senha2.focus(); return; }
+    aviso(form, "", ""); ocupado(btn, "Conferindo...");
+    try {
+      var resp = await fetch(SB_URL + "/functions/v1/primeiro-acesso", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + SB_KEY },
+        body: JSON.stringify({ codigo: codigo, senha: senha })
+      });
+      var dados = {};
+      try { dados = await resp.json(); } catch (x) {}
+      if (!resp.ok || !dados.ok) throw { erro: dados.erro || ("Falha no servidor (" + resp.status + ").") };
+      aviso(form, "ok", "Senha criada. Entrando...");
+      var s = await entrar(dados.email || emailDe(dados.login), senha);
+      f.senha.value = ""; f.senha2.value = ""; f.codigo.value = "";
+      await abrirSessao(s, form);
+    } catch (err) {
+      aviso(form, "erro", err && err.erro ? err.erro : msgErro(err));
+    }
+    ocupado(btn);
+  });
+
+  /* abas */
+  $$(".abas button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $$(".abas button").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
+      ["presencas", "recados", "visitas", "pix", "fotos", "conta"].forEach(function (a) { $("#aba-" + a).hidden = a !== b.dataset.aba; });
+      window.scrollTo(0, 0);
+    });
+  });
+
+  /* dados */
+  async function carregarTudo() {
+    carregando("Carregando...");
+    try { await Promise.all([carregarPresencas(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix()]); }
+    finally { carregando(""); }
+  }
+
+  async function carregarPresencas() {
+    var r = await sb.from("presencas").select("*").order("criado_em", { ascending: false }).limit(5000);
+    if (r.error) { $("#contador").textContent = msgErro(r.error); return; }
+    estado.presencas = r.data || [];
+    desenharPresencas();
+  }
+
+  function desenharPresencas() {
+    var vao = 0, adultos = 0, criancas = 0, naovao = 0;
+    estado.presencas.forEach(function (p) {
+      if (p.vai) { vao++; adultos += p.adultos || 0; criancas += p.criancas || 0; } else naovao++;
+    });
+    $("#n-vao").textContent = vao; $("#n-adultos").textContent = adultos; $("#n-criancas").textContent = criancas;
+    $("#n-pessoas").textContent = adultos + criancas; $("#n-naovao").textContent = naovao;
+
+    var termo = semAcento(estado.busca.trim());
+    var lista = estado.presencas.filter(function (p) {
+      if (estado.filtro === "vao" && !p.vai) return false;
+      if (estado.filtro === "naovao" && p.vai) return false;
+      return !termo || semAcento(p.nome).indexOf(termo) >= 0;
+    });
+    lista.sort(function (a, b) {
+      if (estado.ordem === "nome") return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR");
+      var d = new Date(a.criado_em) - new Date(b.criado_em);
+      return estado.ordem === "antigos" ? d : -d;
+    });
+
+    var alvo = $("#lista-presencas");
+    alvo.textContent = "";
+    $("#contador").textContent = lista.length === estado.presencas.length
+      ? estado.presencas.length + (estado.presencas.length === 1 ? " registro" : " registros")
+      : lista.length + " de " + estado.presencas.length + " registros";
+    if (!lista.length) {
+      alvo.appendChild(h("div", { class: "vazio", text: estado.presencas.length ? "Nenhum registro com esse filtro." : "Ainda não há confirmações." }));
+      return;
+    }
+    var origens = { site: "pelo site", casar: "importado do casar.com", manual: "adicionado no painel" };
+    lista.forEach(function (p) {
+      var tel = p.telefone ? h("a", { href: "tel:" + p.telefone.replace(/[^\d+]/g, ""), text: p.telefone }) : null;
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" },
+          h("div", { class: "nome", text: p.nome }),
+          h("span", { class: "selo " + (p.vai ? "sim" : "nao"), text: p.vai ? "Vai" : "Não vai" })),
+        p.vai ? h("div", { class: "det" },
+          h("span", { text: p.adultos + (p.adultos === 1 ? " adulto" : " adultos") }),
+          h("span", { text: p.criancas + (p.criancas === 1 ? " criança" : " crianças") }), tel)
+          : (tel ? h("div", { class: "det" }, tel) : null),
+        p.mensagem ? h("div", { class: "msg", text: p.mensagem }) : null,
+        h("div", { class: "pe" },
+          h("span", { text: dataBR(p.criado_em) + " · " + (origens[p.origem] || p.origem) }),
+          h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarPresenca(p, this); } }))
+      ));
+    });
+  }
+
+  async function apagarPresenca(p, btn) {
+    if (!confirm("Apagar a confirmação de \"" + p.nome + "\"? Isso não pode ser desfeito.")) return;
+    ocupado(btn, "Apagando...");
+    var r = await sb.from("presencas").delete().eq("id", p.id).select("id");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível apagar."); return; }
+    estado.presencas = estado.presencas.filter(function (x) { return x.id !== p.id; });
+    desenharPresencas();
+  }
+
+  $("#busca").addEventListener("input", function () { estado.busca = this.value; desenharPresencas(); });
+  $$("#filtro button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      estado.filtro = b.dataset.f;
+      $$("#filtro button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+      desenharPresencas();
+    });
+  });
+  $("#ordem").addEventListener("change", function () { estado.ordem = this.value; desenharPresencas(); });
+  $("#atualizar").addEventListener("click", carregarTudo);
+
+  /* adicionar manualmente */
+  var fNovo = $("#f-novo");
+  $("#abrir-novo").addEventListener("click", function () {
+    fNovo.hidden = !fNovo.hidden; aviso(fNovo, "", "");
+    if (!fNovo.hidden) fNovo.elements.nome.focus();
+  });
+  $("#cancelar-novo").addEventListener("click", function () { fNovo.reset(); fNovo.hidden = true; });
+  fNovo.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fNovo.elements, btn = $("button[type=submit]", fNovo);
+    var nome = f.nome.value.trim().replace(/\s+/g, " ");
+    if (nome.length < 2) { aviso(fNovo, "erro", "Informe o nome."); return; }
+    var vai = $("input[name=vai]:checked", fNovo).value === "sim";
+    var linha = {
+      nome: nome.slice(0, 120), vai: vai,
+      adultos: vai ? inteiro(f.adultos.value, 0, 20, 1) : 0,
+      criancas: vai ? inteiro(f.criancas.value, 0, 20, 0) : 0,
+      telefone: f.telefone.value.trim().slice(0, 30) || null,
+      mensagem: f.mensagem.value.trim().slice(0, 500) || null,
+      origem: "manual"
+    };
+    ocupado(btn, "Salvando...");
+    var r = await sb.from("presencas").insert(linha).select().single();
+    ocupado(btn);
+    if (r.error) { aviso(fNovo, "erro", msgErro(r.error)); return; }
+    estado.presencas.unshift(r.data);
+    fNovo.reset(); fNovo.hidden = true;
+    desenharPresencas();
+  });
+
+  /* exportar CSV (UTF-8 com BOM, separador ;) */
+  function celula(v) {
+    var s = v == null ? "" : String(v);
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+    return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  $("#exportar").addEventListener("click", function () {
+    var linhas = [["Nome", "Vai", "Adultos", "Crianças", "Telefone", "Mensagem", "Origem", "Data"]];
+    estado.presencas.slice().sort(function (a, b) { return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR"); })
+      .forEach(function (p) {
+        linhas.push([p.nome, p.vai ? "Sim" : "Não", p.adultos, p.criancas, p.telefone, p.mensagem, p.origem, dataBR(p.criado_em)]);
+      });
+    var csv = "﻿" + linhas.map(function (l) { return l.map(celula).join(";"); }).join("\r\n") + "\r\n";
+    var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = h("a", { href: url, download: "presencas-ana-e-matheus-" + new Date().toISOString().slice(0, 10) + ".csv" });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  });
+
+  /* importar CSV: colunas nome; vai; adultos; crianças */
+  function lerCSV(txt) {
+    txt = txt.replace(/^﻿/, "");
+    var primeira = txt.split(/\r?\n/)[0] || "";
+    var sep = (primeira.split(";").length >= primeira.split(",").length) ? ";" : ",";
+    var linhas = [], campo = "", linha = [], aspas = false;
+    for (var i = 0; i < txt.length; i++) {
+      var c = txt[i];
+      if (aspas) {
+        if (c === '"') { if (txt[i + 1] === '"') { campo += '"'; i++; } else aspas = false; }
+        else campo += c;
+      } else if (c === '"') aspas = true;
+      else if (c === sep) { linha.push(campo); campo = ""; }
+      else if (c === "\n" || c === "\r") {
+        if (c === "\r" && txt[i + 1] === "\n") i++;
+        linha.push(campo); linhas.push(linha); linha = []; campo = "";
+      } else campo += c;
+    }
+    if (campo || linha.length) { linha.push(campo); linhas.push(linha); }
+    return linhas.filter(function (l) { return l.some(function (x) { return x.trim(); }); });
+  }
+  function simNao(v) {
+    var s = semAcento(v).trim();
+    if (/^(sim|s|yes|y|1|true|vai|confirmad[oa]|presente)$/.test(s)) return true;
+    if (/^(nao|n|no|0|false|nao vai|ausente)$/.test(s)) return false;
+    return null;
+  }
+  $("#importar").addEventListener("click", function () { $("#arquivo-csv").value = ""; $("#arquivo-csv").click(); });
+  $("#arquivo-csv").addEventListener("change", async function () {
+    var arq = this.files && this.files[0];
+    if (!arq) return;
+    var buf = await arq.arrayBuffer(), txt;
+    try { txt = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+    catch (e) { txt = new TextDecoder("windows-1252").decode(buf); }
+    var linhas = lerCSV(txt);
+    var cab = (linhas[0] || []).map(function (x) { return semAcento(x).trim(); });
+    var col = { nome: 0, vai: 1, adultos: 2, criancas: 3 };
+    if (cab.indexOf("nome") >= 0) {
+      col = {
+        nome: cab.indexOf("nome"),
+        vai: cab.findIndex(function (x) { return /^(vai|presenca|confirmado|status)/.test(x); }),
+        adultos: cab.findIndex(function (x) { return /^adulto/.test(x); }),
+        criancas: cab.findIndex(function (x) { return /^crianca/.test(x); })
+      };
+      linhas = linhas.slice(1);
+    }
+    var novos = [], ignorados = 0;
+    linhas.forEach(function (l) {
+      var nome = String(l[col.nome] || "").trim().replace(/\s+/g, " ");
+      if (nome.length < 2) { ignorados++; return; }
+      var vai = col.vai >= 0 ? simNao(l[col.vai]) : true;
+      if (vai === null) vai = true;
+      novos.push({
+        nome: nome.slice(0, 120), vai: vai,
+        adultos: vai ? inteiro(col.adultos >= 0 ? l[col.adultos] : "", 0, 20, 1) : 0,
+        criancas: vai ? inteiro(col.criancas >= 0 ? l[col.criancas] : "", 0, 20, 0) : 0,
+        origem: "casar"
+      });
+    });
+    if (!novos.length) { alert("Nenhuma linha válida encontrada. O arquivo precisa ter as colunas: nome; vai; adultos; crianças."); return; }
+    var existentes = {};
+    estado.presencas.forEach(function (p) { existentes[semAcento(p.nome)] = true; });
+    var repetidos = novos.filter(function (n) { return existentes[semAcento(n.nome)]; }).length;
+    var texto = "Importar " + novos.length + " confirmação(ões) do arquivo \"" + arq.name + "\" como origem casar.com?";
+    if (repetidos) texto += "\n\nAtenção: " + repetidos + " nome(s) já existem na lista e ficarão duplicados.";
+    if (ignorados) texto += "\n" + ignorados + " linha(s) sem nome serão ignoradas.";
+    texto += "\n\nPrimeiro: " + novos[0].nome + " (" + (novos[0].vai ? "vai, " + novos[0].adultos + " adulto(s), " + novos[0].criancas + " criança(s)" : "não vai") + ")";
+    if (!confirm(texto)) return;
+    carregando("Importando " + novos.length + "...");
+    var r = await sb.from("presencas").insert(novos);
+    carregando("");
+    if (r.error) { alert("Não foi possível importar: " + msgErro(r.error)); return; }
+    await carregarPresencas();
+    alert(novos.length + " confirmação(ões) importada(s).");
+  });
+
+  /* recados */
+  async function carregarRecados() {
+    var r = await sb.from("recados").select("*").order("criado_em", { ascending: false }).limit(5000);
+    if (r.error) { $("#contador-recados").textContent = msgErro(r.error); return; }
+    estado.recados = r.data || [];
+    desenharRecados();
+  }
+  function desenharRecados() {
+    var alvo = $("#lista-recados");
+    alvo.textContent = "";
+    $("#contador-recados").textContent = estado.recados.length + (estado.recados.length === 1 ? " recado" : " recados");
+    if (!estado.recados.length) { alvo.appendChild(h("div", { class: "vazio", text: "Ainda não há recados." })); return; }
+    estado.recados.forEach(function (rc) {
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" }, h("div", { class: "nome", text: rc.nome })),
+        h("div", { class: "msg", text: rc.mensagem }),
+        h("div", { class: "pe" },
+          h("span", { text: dataBR(rc.criado_em) }),
+          h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarRecado(rc, this); } }))
+      ));
+    });
+  }
+  async function apagarRecado(rc, btn) {
+    if (!confirm("Apagar o recado de \"" + rc.nome + "\"? Isso não pode ser desfeito.")) return;
+    ocupado(btn, "Apagando...");
+    var r = await sb.from("recados").delete().eq("id", rc.id).select("id");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível apagar."); return; }
+    estado.recados = estado.recados.filter(function (x) { return x.id !== rc.id; });
+    desenharRecados();
+  }
+
+  /* fotos */
+  async function carregarFotos() {
+    var r = await sb.from("config").select("valor").eq("chave", "fotos").maybeSingle();
+    if (!r.error && r.data && r.data.valor) estado.fotos = { capa: r.data.valor.capa || null, local: r.data.valor.local || null };
+    desenharFotos();
+  }
+  function desenharFotos() {
+    $$(".foto").forEach(function (card) {
+      var k = card.dataset.chave, url = estado.fotos[k];
+      if (card.dataset.previa) return;
+      $(".quadro img", card).src = url || PADRAO[k];
+      $(".estado", card).textContent = url ? "Mostrando a foto enviada pelo painel." : "Mostrando a foto original do site.";
+      $("[data-acao=original]", card).hidden = !url;
+    });
+  }
+
+  function lerImagem(arquivo) {
+    return new Promise(function (ok, falha) {
+      var url = URL.createObjectURL(arquivo), img = new Image();
+      img.onload = function () { ok({ img: img, url: url }); };
+      img.onerror = function () { URL.revokeObjectURL(url); falha(new Error("Não consegui abrir essa imagem. Tente uma foto JPG ou PNG.")); };
+      img.src = url;
+    });
+  }
+  function paraBlob(canvas, tipo, q) {
+    return new Promise(function (ok) { canvas.toBlob(function (b) { ok(b); }, tipo, q); });
+  }
+  async function reduzir(arquivo) {
+    var r = await lerImagem(arquivo), img = r.img;
+    var w = img.naturalWidth, hgt = img.naturalHeight;
+    var esc = Math.min(1, MAX_LADO / Math.max(w, hgt));
+    var cw = Math.max(1, Math.round(w * esc)), ch = Math.max(1, Math.round(hgt * esc));
+    var c = document.createElement("canvas"); c.width = cw; c.height = ch;
+    var ctx = c.getContext("2d");
+    ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, cw, ch);
+    URL.revokeObjectURL(r.url);
+    var blob = await paraBlob(c, "image/webp", 0.85);
+    if (!blob || blob.type !== "image/webp") blob = await paraBlob(c, "image/jpeg", 0.86);
+    if (!blob) throw new Error("Não consegui preparar a foto.");
+    return { blob: blob, w: cw, h: ch };
+  }
+
+  $$(".foto").forEach(function (card) {
+    var k = card.dataset.chave, input = $("input[type=file]", card), pronto = null, previaUrl = null;
+    var bEsc = $("[data-acao=escolher]", card), bSal = $("[data-acao=salvar]", card), bCan = $("[data-acao=cancelar]", card), bOri = $("[data-acao=original]", card);
+    function limparPrevia() {
+      if (previaUrl) URL.revokeObjectURL(previaUrl);
+      previaUrl = null; pronto = null; delete card.dataset.previa;
+      bSal.hidden = true; bCan.hidden = true; bEsc.hidden = false;
+      desenharFotos();
+    }
+    bEsc.addEventListener("click", function () { input.value = ""; input.click(); });
+    input.addEventListener("change", async function () {
+      var arq = input.files && input.files[0];
+      if (!arq) return;
+      aviso(card, "", ""); ocupado(bEsc, "Preparando...");
+      try {
+        pronto = await reduzir(arq);
+        previaUrl = URL.createObjectURL(pronto.blob);
+        card.dataset.previa = "1";
+        $(".quadro img", card).src = previaUrl;
+        $(".estado", card).textContent = "Prévia: " + pronto.w + " x " + pronto.h + " px, " + Math.round(pronto.blob.size / 1024) + " KB. Confira e toque em Salvar.";
+        bEsc.hidden = true; bSal.hidden = false; bCan.hidden = false; bOri.hidden = true;
+      } catch (e) { aviso(card, "erro", e.message || "Não consegui abrir a foto."); }
+      ocupado(bEsc);
+    });
+    bCan.addEventListener("click", function () { aviso(card, "", ""); limparPrevia(); });
+    bSal.addEventListener("click", async function () {
+      if (!pronto) return;
+      ocupado(bSal, "Enviando..."); bCan.disabled = true;
+      try {
+        var ext = pronto.blob.type === "image/webp" ? "webp" : "jpg";
+        var nome = k + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        var up = await sb.storage.from("fotos").upload(nome, pronto.blob, { contentType: pronto.blob.type, cacheControl: "31536000", upsert: false });
+        if (up.error) throw up.error;
+        var pub = sb.storage.from("fotos").getPublicUrl(nome).data.publicUrl;
+        if (pub.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da foto.");
+        await salvarFoto(k, pub);
+        limparPrevia();
+        aviso(card, "ok", "Foto salva! Ela já aparece no site (recarregue a página do site para ver).");
+      } catch (e) { aviso(card, "erro", msgErro(e)); }
+      ocupado(bSal); bCan.disabled = false;
+    });
+    bOri.addEventListener("click", async function () {
+      if (!confirm("Voltar à foto original do site nesta posição?")) return;
+      ocupado(bOri, "Salvando...");
+      try { await salvarFoto(k, null); aviso(card, "ok", "Pronto, o site voltou a usar a foto original."); }
+      catch (e) { aviso(card, "erro", msgErro(e)); }
+      ocupado(bOri); desenharFotos();
+    });
+  });
+
+  async function salvarFoto(chave, url) {
+    var atual = await sb.from("config").select("valor").eq("chave", "fotos").maybeSingle();
+    if (atual.error) throw atual.error;
+    var valor = Object.assign({ capa: null, local: null }, (atual.data && atual.data.valor) || {});
+    valor[chave] = url;
+    var r;
+    if (atual.data) r = await sb.from("config").update({ valor: valor, atualizado_em: new Date().toISOString() }).eq("chave", "fotos").select("chave");
+    else r = await sb.from("config").insert({ chave: "fotos", valor: valor }).select("chave");
+    if (r.error) throw r.error;
+    if (!r.data || !r.data.length) throw new Error("sem permissão para alterar as fotos.");
+    estado.fotos = { capa: valor.capa, local: valor.local };
+    desenharFotos();
+  }
+
+  /* visitas */
+  var fmtDia = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
+  function diaBR(iso) { return fmtDia.format(new Date(iso + "T12:00:00Z")); }
+  async function carregarVisitas() {
+    var r = await sb.rpc("visitas_resumo");
+    if (r.error || !r.data) { $("#v-dica").textContent = r.error ? msgErro(r.error) : "Sem dados."; return; }
+    desenharVisitas(r.data);
+  }
+  function desenharVisitas(d) {
+    $("#v-total").textContent = d.total || 0; $("#v-unicos").textContent = d.unicos || 0;
+    $("#v-hoje").textContent = d.hoje || 0; $("#v-semana").textContent = d.semana || 0;
+    $("#v-unicos-semana").textContent = d.unicos_semana || 0;
+
+    var dias = d.dias || [], max = 0;
+    dias.forEach(function (x) { if (x.n > max) max = x.n; });
+    var g = $("#v-grafico"); g.textContent = "";
+    var tip = h("span", { class: "tip", hidden: true });
+    g.appendChild(h("span", { class: "max", text: max ? "máx. " + max : "" }));
+    function mostrar(b, x) {
+      $$(".barra", g).forEach(function (y) { y.classList.toggle("ativa", y === b); });
+      tip.textContent = diaBR(x.dia) + ": " + x.n + (x.n === 1 ? " visualização" : " visualizações");
+      tip.hidden = false;
+      var pos = b.offsetLeft + b.offsetWidth / 2, w = g.clientWidth;
+      tip.style.left = Math.min(w - 70, Math.max(70, pos)) + "px";
+    }
+    dias.forEach(function (x, i) {
+      var b = h("button", { type: "button", class: "barra" + (x.n ? "" : " zero") + (i === dias.length - 1 ? " hoje" : ""),
+                            "aria-label": diaBR(x.dia) + ": " + x.n + " visualizações" });
+      var alt = max ? Math.max(x.n ? 4 : 1, Math.round(x.n / max * 100)) : 1;
+      b.appendChild(h("i", { style: "height:" + (x.n ? alt + "%" : "1px") }));
+      b.addEventListener("mouseenter", function () { mostrar(b, x); });
+      b.addEventListener("focus", function () { mostrar(b, x); });
+      b.addEventListener("click", function () { mostrar(b, x); });
+      g.appendChild(b);
+    });
+    g.appendChild(tip);
+    g.addEventListener("mouseleave", function () { tip.hidden = true; $$(".barra", g).forEach(function (y) { y.classList.remove("ativa"); }); });
+    var eixo = $("#v-eixo") || h("div", { class: "eixo", id: "v-eixo" });
+    eixo.textContent = "";
+    if (dias.length) {
+      eixo.appendChild(h("span", { text: diaBR(dias[0].dia) }));
+      eixo.appendChild(h("span", { text: diaBR(dias[Math.floor(dias.length / 2)].dia) }));
+      eixo.appendChild(h("span", { text: "hoje" }));
+    }
+    g.after(eixo);
+
+    var disp = d.dispositivos || {}, cores = { celular: "#8a7764", computador: "#0f141a", tablet: "#b3a597" };
+    var total = (disp.celular || 0) + (disp.computador || 0) + (disp.tablet || 0);
+    var bar = $("#v-divisao"), leg = $("#v-legenda"); bar.textContent = ""; leg.textContent = "";
+    ["celular", "computador", "tablet"].forEach(function (k) {
+      var n = disp[k] || 0;
+      if (!n && k === "tablet") return;
+      var pct = total ? Math.round(n / total * 100) : 0;
+      if (n) bar.appendChild(h("span", { style: "width:" + (n / total * 100) + "%;background:" + cores[k], title: k + ": " + n }));
+      var nomeK = { celular: "Celular", computador: "Computador", tablet: "Tablet" }[k];
+      var li = h("li", null, h("i", { style: "background:" + cores[k] }), nomeK + ": " + n + (total ? " (" + pct + "%)" : ""));
+      leg.appendChild(li);
+    });
+  }
+  $("#v-atualizar").addEventListener("click", carregarVisitas);
+
+  /* Pix */
+  var fPix = $("#f-pix"), pixAtual = null, pixPayload = "";
+  function previaPix() {
+    var f = fPix.elements;
+    var dados = { chave: f.chave.value, nome: f.nome.value, cidade: f.cidade.value, mensagem: f.mensagem.value };
+    var k = f.chave.value.trim() ? Pix.chave(f.chave.value) : null;
+    $("#pix-tipo").textContent = !k ? "" : (k.erro ? k.erro : "Tipo de chave: " + k.tipo + " (" + k.chave + ")");
+    $("#pix-tipo").style.color = k && k.erro ? "var(--err)" : "";
+    var r = Pix.payload(dados), qrBox = $("#pix-qr");
+    pixPayload = "";
+    if (r.erro || !window.qrcode) {
+      qrBox.innerHTML = '<p class="nota">' + (window.qrcode ? "Preencha a chave e o nome para ver o QR code." : "Não consegui carregar o gerador de QR code.") + "</p>";
+      $("#pix-recebedor").textContent = ""; $("#pix-copiar").hidden = true;
+      return r;
+    }
+    var qr = window.qrcode(0, "M"); qr.addData(r.payload); qr.make();
+    qrBox.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+    $("#pix-recebedor").textContent = "Recebedor: " + r.nome + " · " + r.cidade;
+    $("#pix-copiar").hidden = false; pixPayload = r.payload;
+    return r;
+  }
+  async function carregarPix() {
+    var r = await sb.from("config").select("valor").eq("chave", "pix").maybeSingle();
+    if (r.error) { aviso(fPix, "erro", msgErro(r.error)); return; }
+    pixAtual = r.data ? (r.data.valor || {}) : null;
+    var v = pixAtual || {}, f = fPix.elements;
+    f.chave.value = v.chave || ""; f.nome.value = v.nome || ""; f.cidade.value = v.cidade || "PALMAS"; f.mensagem.value = v.mensagem || "";
+    $("#pix-remover").hidden = !(pixAtual && pixAtual.chave);
+    previaPix();
+  }
+  fPix.addEventListener("input", previaPix);
+  async function gravarPix(valor) {
+    var r = pixAtual !== null
+      ? await sb.from("config").update({ valor: valor, atualizado_em: new Date().toISOString() }).eq("chave", "pix").select("chave")
+      : await sb.from("config").insert({ chave: "pix", valor: valor }).select("chave");
+    if (r.error) throw r.error;
+    if (!r.data || !r.data.length) throw new Error("sem permissão para alterar o Pix.");
+    pixAtual = valor;
+    $("#pix-remover").hidden = !valor.chave;
+  }
+  fPix.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var btn = $("button[type=submit]", fPix), r = previaPix();
+    if (r.erro) { aviso(fPix, "erro", r.erro); return; }
+    var valor = { chave: r.chave, nome: r.nome, cidade: r.cidade, mensagem: fPix.elements.mensagem.value.trim().slice(0, 60) || null };
+    ocupado(btn, "Salvando...");
+    try {
+      await gravarPix(valor);
+      aviso(fPix, "ok", "Pix salvo. Ele já aparece na Lista de presentes do site. Teste lendo o QR com o app do banco antes de divulgar.");
+    } catch (err) { aviso(fPix, "erro", msgErro(err)); }
+    ocupado(btn);
+  });
+  $("#pix-remover").addEventListener("click", async function () {
+    if (!confirm("Tirar o Pix do site? O QR code deixa de aparecer na Lista de presentes.")) return;
+    ocupado(this, "Salvando...");
+    try {
+      await gravarPix({ chave: null, nome: (pixAtual && pixAtual.nome) || null, cidade: (pixAtual && pixAtual.cidade) || "PALMAS", mensagem: null });
+      fPix.elements.chave.value = ""; previaPix();
+      aviso(fPix, "ok", "Pix retirado do site.");
+    } catch (err) { aviso(fPix, "erro", msgErro(err)); }
+    ocupado(this);
+  });
+  $("#pix-copiar").addEventListener("click", function () {
+    if (!pixPayload) return;
+    var b = this;
+    function ok() { b.textContent = "Copiado!"; setTimeout(function () { b.textContent = "Copiar código (para testar no app do banco)"; }, 2000); }
+    if (navigator.clipboard) navigator.clipboard.writeText(pixPayload).then(ok, function () { prompt("Copie o código:", pixPayload); });
+    else prompt("Copie o código:", pixPayload);
+  });
+
+  /* conta */
+  $("#f-senha").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var form = this, f = form.elements, btn = $("button[type=submit]", form);
+    if (f.senha.value.length < 8 || f.senha.value.length > 72) { aviso(form, "erro", "A senha precisa ter de 8 a 72 caracteres."); return; }
+    if (f.senha.value !== f.senha2.value) { aviso(form, "erro", "As duas senhas não são iguais."); return; }
+    ocupado(btn, "Salvando...");
+    var r = await sb.auth.updateUser({ password: f.senha.value });
+    ocupado(btn);
+    if (r.error) { aviso(form, "erro", msgErro(r.error)); return; }
+    form.reset(); aviso(form, "ok", "Senha trocada. Use a nova senha da próxima vez.");
+  });
+  $("#sair").addEventListener("click", async function () {
+    await sb.auth.signOut();
+    estado.logado = false; estado.presencas = []; estado.recados = [];
+    $("#lista-presencas").textContent = ""; $("#lista-recados").textContent = "";
+    mostrarEntrada("login");
+  });
+
+  sb.auth.onAuthStateChange(function (ev) {
+    if (ev === "SIGNED_OUT" && estado.logado) { estado.logado = false; mostrarEntrada("login"); }
+  });
+
+  /* início: sessão salva? */
+  (async function () {
+    var r = await sb.auth.getSession();
+    var s = r.data && r.data.session;
+    if (s) {
+      try { await abrirSessao(s); } catch (e) { mostrarEntrada("login"); }
+    } else mostrarEntrada("login");
+  })();
+})();
+</script>
+</body>
+</html>
