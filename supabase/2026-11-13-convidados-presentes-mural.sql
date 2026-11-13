@@ -33,12 +33,15 @@ drop trigger if exists recados_proteger on public.recados;
 create trigger recados_proteger before insert on public.recados
   for each row execute function public.recados_proteger();
 
+-- o site (anon) lê só os publicados; os noivos já leem tudo pela política recados_ver
 drop policy if exists recados_mural_publico on public.recados;
-create policy recados_mural_publico on public.recados for select to anon, authenticated using (publicado);
+create policy recados_mural_publico on public.recados for select to anon using (publicado);
 
+-- os noivos podem publicar/tirar do mural (inserir e apagar já existem: recados_inserir e recados_apagar)
 drop policy if exists recados_admin_tudo on public.recados;
-create policy recados_admin_tudo on public.recados for all to authenticated
-  using (public.is_admin()) with check (public.is_admin());
+drop policy if exists recados_editar on public.recados;
+create policy recados_editar on public.recados for update to authenticated
+  using ((select public.is_admin())) with check ((select public.is_admin()));
 
 grant select, insert on public.recados to anon;
 grant select, insert, update, delete on public.recados to authenticated;
@@ -61,11 +64,11 @@ create table if not exists public.presentes (
 alter table public.presentes enable row level security;
 
 drop policy if exists presentes_publico on public.presentes;
-create policy presentes_publico on public.presentes for select to anon, authenticated using (ativo);
+create policy presentes_publico on public.presentes for select to anon using (ativo);
 
 drop policy if exists presentes_admin on public.presentes;
 create policy presentes_admin on public.presentes for all to authenticated
-  using (public.is_admin()) with check (public.is_admin());
+  using ((select public.is_admin())) with check ((select public.is_admin()));
 
 revoke all on public.presentes from anon;
 grant select on public.presentes to anon;
@@ -92,11 +95,11 @@ create index if not exists presentes_recebidos_presente_idx on public.presentes_
 alter table public.presentes_recebidos enable row level security;
 
 drop policy if exists presentes_recebidos_avisar on public.presentes_recebidos;
-create policy presentes_recebidos_avisar on public.presentes_recebidos for insert to anon, authenticated with check (true);
+create policy presentes_recebidos_avisar on public.presentes_recebidos for insert to anon with check (presente_id is not null);
 
 drop policy if exists presentes_recebidos_admin on public.presentes_recebidos;
 create policy presentes_recebidos_admin on public.presentes_recebidos for all to authenticated
-  using (public.is_admin()) with check (public.is_admin());
+  using ((select public.is_admin())) with check ((select public.is_admin()));
 
 revoke all on public.presentes_recebidos from anon;
 grant insert on public.presentes_recebidos to anon;
@@ -176,7 +179,7 @@ alter table public.convidados enable row level security;
 
 drop policy if exists convidados_admin on public.convidados;
 create policy convidados_admin on public.convidados for all to authenticated
-  using (public.is_admin()) with check (public.is_admin());
+  using ((select public.is_admin())) with check ((select public.is_admin()));
 
 revoke all on public.convidados from anon;
 grant select, insert, update, delete on public.convidados to authenticated;
