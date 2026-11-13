@@ -152,6 +152,28 @@
   .previa-pix .qr{width:220px; max-width:100%; margin:0 auto 10px}
   .previa-pix .qr svg{display:block; width:100%; height:auto}
 
+  .selo.espera{background:#f6efe3; color:#7a5b2e}
+  .selo.mural{background:#e9eef5; color:#2f4a6b}
+  .faixa{margin-bottom:14px}
+  .item .pe{flex-wrap:wrap}
+  .item .pe .botoes-item{display:flex; flex-wrap:wrap; gap:6px}
+  .item .pe.empilha > span{flex-basis:100%}
+  .item .nome small{display:block; font-weight:500; font-size:14px; color:var(--soft)}
+  .item .det strong{color:var(--ink)}
+  .miniatura{flex:none; width:56px; height:56px; border-radius:10px; object-fit:cover; background:var(--bg2); display:grid; place-items:center; color:var(--taupe)}
+  .miniatura svg{width:26px; height:26px}
+  .prog{height:8px; border-radius:999px; background:var(--bg2); overflow:hidden}
+  .prog span{display:block; height:100%; background:var(--accent); border-radius:999px}
+  .numeros b.moeda{font-size:28px; line-height:1.15; word-break:break-word}
+  .painel-form select{width:100%; min-height:44px; border:1px solid var(--line); border-radius:10px; padding:8px 10px; background:var(--bg); font-size:16px}
+  .painel-form .check{display:flex; align-items:center; gap:10px; font-size:14px; font-weight:600; min-height:44px}
+  .painel-form .check input{width:20px; height:20px; min-height:0; accent-color:var(--accent); flex:none}
+  .ops.tres label{font-size:14px; padding:10px 8px}
+  .foto-presente{display:flex; gap:12px; align-items:center}
+  .foto-presente img{width:72px; height:72px; object-fit:cover; border-radius:10px; background:var(--bg2); flex:none}
+  .acoes .btn[disabled], .ferramentas [disabled]{cursor:not-allowed}
+  #p-vista{margin-bottom:14px}
+
   .carregando{position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom)); transform:translateX(-50%); background:var(--dark); color:#fff;
               padding:10px 18px; border-radius:999px; font-size:14px; font-weight:600; z-index:50; box-shadow:0 8px 24px rgba(0,0,0,.25); max-width:calc(100% - 32px); text-align:center}
 
@@ -207,6 +229,8 @@
     </div>
     <nav class="abas" role="tablist">
       <button role="tab" data-aba="presencas" aria-selected="true">Presenças</button>
+      <button role="tab" data-aba="convidados" aria-selected="false">Convidados</button>
+      <button role="tab" data-aba="presentes" aria-selected="false">Presentes</button>
       <button role="tab" data-aba="recados" aria-selected="false">Recados</button>
       <button role="tab" data-aba="visitas" aria-selected="false">Visitas</button>
       <button role="tab" data-aba="pix" aria-selected="false">Pix</button>
@@ -244,9 +268,9 @@
       <div class="acoes">
         <button class="btn cheio peq" type="button" id="abrir-novo">+ Adicionar</button>
         <button class="btn peq" type="button" id="exportar">Exportar CSV</button>
-        <button class="btn peq" type="button" id="importar">Importar CSV</button>
+        <button class="btn peq" type="button" id="importar">Importar planilha</button>
         <button class="btn peq" type="button" id="atualizar">Atualizar</button>
-        <input type="file" id="arquivo-csv" accept=".csv,text/csv,text/plain" hidden>
+        <input type="file" id="arquivo-csv" accept=".csv,.xlsx,.xls,.ods,text/csv,text/plain" hidden>
       </div>
 
       <form class="painel-form" id="f-novo" novalidate hidden>
@@ -274,8 +298,186 @@
       <div class="lista" id="lista-presencas"></div>
     </section>
 
+    <section id="aba-convidados" hidden>
+      <h2>Convidados</h2>
+      <p class="aviso erro faixa" data-banco hidden></p>
+      <div class="numeros" aria-live="polite">
+        <div class="destaque"><b id="c-pessoas">0</b><small>Pessoas na lista</small></div>
+        <div><b id="c-total">0</b><small>Convites</small></div>
+        <div><b id="c-sim">0</b><small>Confirmaram</small></div>
+        <div><b id="c-nao">0</b><small>Não vão</small></div>
+        <div><b id="c-sem">0</b><small>Sem resposta</small></div>
+      </div>
+      <div class="ferramentas">
+        <input class="busca" id="c-busca" type="search" placeholder="Buscar por nome ou grupo" autocomplete="off">
+        <div class="linha">
+          <div class="seg" id="c-filtro" role="group" aria-label="Filtro">
+            <button type="button" data-f="todos" aria-pressed="true">Todos</button>
+            <button type="button" data-f="sim" aria-pressed="false">Vão</button>
+            <button type="button" data-f="nao" aria-pressed="false">Não vão</button>
+            <button type="button" data-f="sem" aria-pressed="false">Sem resposta</button>
+          </div>
+        </div>
+      </div>
+      <div class="acoes">
+        <button class="btn cheio peq" type="button" id="c-novo" data-banco-acao>+ Adicionar</button>
+        <button class="btn peq" type="button" id="c-importar" data-banco-acao>Importar planilha</button>
+        <button class="btn peq" type="button" id="c-exportar" data-banco-acao>Exportar CSV</button>
+        <input type="file" id="c-arquivo" accept=".csv,.xlsx,.xls,.ods,text/csv,text/plain" hidden>
+      </div>
+      <p class="nota" style="margin-bottom:12px">Importe a lista exportada do casar.com (Excel ou CSV) ou qualquer planilha com as colunas nome, telefone, adultos, crianças e grupo. Quem confirma no site aparece aqui sozinho, ligado pelo nome.</p>
+
+      <form class="painel-form" id="f-conv" novalidate hidden>
+        <h3 data-titulo>Adicionar convidado</h3>
+        <label>Nome<input name="nome" required maxlength="120"></label>
+        <div class="dupla">
+          <label>Grupo / família<input name="grupo" maxlength="60" placeholder="Ex.: Família da noiva"></label>
+          <label>Telefone<input name="telefone" type="tel" maxlength="30" placeholder="(63) 99999-9999"></label>
+        </div>
+        <div class="dupla">
+          <label>Adultos<input name="adultos" type="number" inputmode="numeric" min="0" max="20" value="1"></label>
+          <label>Crianças<input name="criancas" type="number" inputmode="numeric" min="0" max="20" value="0"></label>
+        </div>
+        <div class="ops tres" role="group" aria-label="Resposta">
+          <label><input type="radio" name="resposta" value="" checked> Sem resposta</label>
+          <label><input type="radio" name="resposta" value="sim"> Vai</label>
+          <label><input type="radio" name="resposta" value="nao"> Não vai</label>
+        </div>
+        <p class="nota">Marque a resposta só se a pessoa respondeu fora do site (telefone, WhatsApp, casar.com). Se ela confirmar pelo site, vale o que ela mandou no site.</p>
+        <label>Observação (opcional)<textarea name="observacao" maxlength="500"></textarea></label>
+        <p class="aviso" role="alert" hidden></p>
+        <div class="linha">
+          <button class="btn cheio" type="submit">Salvar</button>
+          <button class="btn" type="button" data-cancelar>Cancelar</button>
+        </div>
+      </form>
+
+      <p class="contador" id="c-contador"></p>
+      <div class="lista" id="c-lista"></div>
+    </section>
+
+    <section id="aba-presentes" hidden>
+      <h2>Lista de presentes</h2>
+      <p class="aviso erro faixa" data-banco hidden></p>
+      <p class="aviso erro faixa" id="p-sem-pix" hidden>Ainda não há chave Pix cadastrada. Sem ela, o botão “Presentear” do site leva para a lista do casar.com. Cadastre a chave na aba Pix para receber direto na conta de vocês.</p>
+      <div class="numeros" aria-live="polite">
+        <div class="destaque"><b class="moeda" id="p-total">R$ 0,00</b><small>Total avisado pelos convidados</small></div>
+        <div><b id="p-itens">0</b><small>Itens no site</small></div>
+        <div><b id="p-cotas">0</b><small>Cotas presenteadas</small></div>
+        <div><b id="p-conferir">0</b><small>Para conferir</small></div>
+        <div><b class="moeda" id="p-conferido">R$ 0,00</b><small>Já conferido</small></div>
+      </div>
+      <div class="seg" id="p-vista" role="group" aria-label="Ver">
+        <button type="button" data-v="itens" aria-pressed="true">Itens da lista</button>
+        <button type="button" data-v="recebidos" aria-pressed="false">Quem presenteou</button>
+      </div>
+
+      <div id="p-v-itens">
+        <div class="acoes">
+          <button class="btn cheio peq" type="button" id="p-novo" data-banco-acao>+ Novo presente</button>
+          <button class="btn peq" type="button" id="p-importar" data-banco-acao>Importar planilha</button>
+          <input type="file" id="p-arquivo" accept=".csv,.xlsx,.xls,.ods,text/csv,text/plain" hidden>
+        </div>
+        <form class="painel-form" id="f-presente" novalidate hidden>
+          <h3 data-titulo>Novo presente</h3>
+          <label>Nome do presente<input name="nome" required maxlength="120" placeholder="Ex.: Jantar romântico na lua de mel"></label>
+          <label>Descrição (opcional)<textarea name="descricao" maxlength="500"></textarea></label>
+          <div class="dupla">
+            <label>Valor da cota (R$)<input name="valor" inputmode="decimal" autocomplete="off" placeholder="150,00"></label>
+            <label>Quantidade de cotas<input name="cotas" type="number" inputmode="numeric" min="1" max="1000" value="1"></label>
+          </div>
+          <p class="nota">Com 1 cota é um presente inteiro. Com várias, cada convidado escolhe quantas cotas quer dar.</p>
+          <div class="foto-presente">
+            <img alt="Foto do presente" hidden>
+            <div class="linha">
+              <button class="btn peq" type="button" data-foto="escolher">Escolher foto</button>
+              <button class="btn perigo peq" type="button" data-foto="tirar" hidden>Tirar foto</button>
+            </div>
+            <input type="file" accept="image/*" hidden>
+          </div>
+          <div class="dupla">
+            <label>Posição na lista<input name="ordem" type="number" inputmode="numeric" min="0" max="999" value="0"></label>
+            <label class="check"><input type="checkbox" name="ativo" checked> Mostrar no site</label>
+          </div>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha">
+            <button class="btn cheio" type="submit">Salvar</button>
+            <button class="btn" type="button" data-cancelar>Cancelar</button>
+          </div>
+        </form>
+        <p class="contador" id="p-contador"></p>
+        <div class="lista" id="p-lista"></div>
+      </div>
+
+      <div id="p-v-recebidos" hidden>
+        <div class="acoes">
+          <button class="btn cheio peq" type="button" id="r-novo" data-banco-acao>+ Lançar presente</button>
+          <button class="btn peq" type="button" id="r-exportar" data-banco-acao>Exportar CSV</button>
+        </div>
+        <p class="nota" style="margin-bottom:12px">“Conferir” = o convidado avisou pelo site que fez o Pix. Veja no app do banco se o valor entrou e toque em “Marcar como conferido”.</p>
+        <form class="painel-form" id="f-recebido" novalidate hidden>
+          <h3>Lançar presente recebido</h3>
+          <p class="nota">Para presentes que chegaram pelo casar.com, em dinheiro ou por fora do site.</p>
+          <label>Presente<select name="presente_id"></select></label>
+          <label data-outro>Qual presente<input name="presente_nome" maxlength="120" placeholder="Ex.: Cota lua de mel"></label>
+          <label>Quem deu<input name="nome" required maxlength="120"></label>
+          <div class="dupla">
+            <label>Cotas<input name="cotas" type="number" inputmode="numeric" min="1" max="100" value="1"></label>
+            <label>Valor total (R$)<input name="valor" inputmode="decimal" autocomplete="off" placeholder="0,00"></label>
+          </div>
+          <label>Como chegou<select name="forma">
+            <option value="casar">Pelo casar.com</option>
+            <option value="pix">Pix</option>
+            <option value="outro">Outro (dinheiro, transferência...)</option>
+          </select></label>
+          <label>Mensagem (opcional)<textarea name="mensagem" maxlength="1000"></textarea></label>
+          <label class="check"><input type="checkbox" name="confirmado" checked> Já conferi que o dinheiro entrou</label>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha">
+            <button class="btn cheio" type="submit">Salvar</button>
+            <button class="btn" type="button" data-cancelar>Cancelar</button>
+          </div>
+        </form>
+        <p class="contador" id="r-contador"></p>
+        <div class="lista" id="r-lista"></div>
+      </div>
+    </section>
+
     <section id="aba-recados" hidden>
       <h2>Recados</h2>
+      <p class="aviso erro faixa" data-banco hidden></p>
+      <p class="nota" style="margin-bottom:12px">Os recados marcados “No mural” aparecem no site, na parte de Recados. Os outros só vocês veem.</p>
+      <div class="ferramentas">
+        <div class="linha">
+          <div class="seg" id="rc-filtro" role="group" aria-label="Filtro">
+            <button type="button" data-f="todos" aria-pressed="true">Todos</button>
+            <button type="button" data-f="mural" aria-pressed="false">No mural</button>
+            <button type="button" data-f="fora" aria-pressed="false">Fora do mural</button>
+          </div>
+        </div>
+      </div>
+      <div class="acoes">
+        <button class="btn cheio peq" type="button" id="rc-novo" data-banco-acao>+ Adicionar</button>
+        <button class="btn peq" type="button" id="rc-importar" data-banco-acao>Importar planilha</button>
+        <button class="btn peq" type="button" id="rc-todos" data-banco-acao>Mostrar todos no mural</button>
+        <input type="file" id="rc-arquivo" accept=".csv,.xlsx,.xls,.ods,text/csv,text/plain" hidden>
+      </div>
+      <form class="painel-form" id="f-recado" novalidate hidden>
+        <h3>Adicionar recado</h3>
+        <p class="nota">Para trazer os recados que chegaram pelo casar.com (ou por WhatsApp).</p>
+        <label>Nome<input name="nome" required maxlength="120"></label>
+        <label>Recado<textarea name="mensagem" required maxlength="1000"></textarea></label>
+        <div class="dupla">
+          <label>Data (opcional)<input name="data" type="date"></label>
+          <label>Veio de<select name="origem"><option value="casar">casar.com</option><option value="manual">Outro lugar</option></select></label>
+        </div>
+        <label class="check"><input type="checkbox" name="publicado"> Mostrar no mural do site</label>
+        <p class="aviso" role="alert" hidden></p>
+        <div class="linha">
+          <button class="btn cheio" type="submit">Salvar</button>
+          <button class="btn" type="button" data-cancelar>Cancelar</button>
+        </div>
+      </form>
       <p class="contador" id="contador-recados"></p>
       <div class="lista recados" id="lista-recados"></div>
     </section>
@@ -442,7 +644,7 @@
       }
       return ("000" + crc.toString(16).toUpperCase()).slice(-4);
     }
-    /* dados = {chave, nome, cidade, mensagem}; devolve {payload, nome, cidade, tipo} ou {erro} */
+    /* dados = {chave, nome, cidade, mensagem, valor?}; devolve {payload, nome, cidade, tipo} ou {erro} */
     function payload(dados) {
       var k = chave(dados && dados.chave);
       if (k.erro) return k;
@@ -452,7 +654,9 @@
       var conta = campo("00", "br.gov.bcb.pix") + campo("01", k.chave);
       var msg = limpo(dados.mensagem, 99 - conta.length - 4);
       if (msg) conta += campo("02", msg);
-      var p = campo("00", "01") + campo("26", conta) + campo("52", "0000") + campo("53", "986") + campo("58", "BR") +
+      var valor = Number(dados.valor) > 0 ? Number(dados.valor).toFixed(2) : "";
+      if (valor.length > 13) return { erro: "Valor alto demais para o Pix." };
+      var p = campo("00", "01") + campo("26", conta) + campo("52", "0000") + campo("53", "986") + (valor ? campo("54", valor) : "") + campo("58", "BR") +
               campo("59", nome) + campo("60", cidade) + campo("62", campo("05", "***")) + "6304";
       return { payload: p + crc16(p), nome: nome, cidade: cidade, tipo: k.tipo, chave: k.chave };
     }
@@ -468,7 +672,13 @@
   }
   var sb = window.supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: true, autoRefreshToken: true, storageKey: "am2027-painel" } });
 
-  var estado = { presencas: [], recados: [], fotos: { capa: null, local: null }, filtro: "todos", busca: "", ordem: "recentes", logado: false };
+  var estado = { presencas: [], recados: [], fotos: { capa: null, local: null }, filtro: "todos", busca: "", ordem: "recentes", logado: false,
+                 convidados: [], convOk: false, cFiltro: "todos", cBusca: "", semConvite: 0,
+                 presentes: [], recebidos: [], presOk: false, pVista: "itens",
+                 rcFiltro: "todos", muralOk: true };
+  var XLSX_URL = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+  var XLSX_SRI = "sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT";
+  var ICONE_PRESENTE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M3 12h18M12 8v13M12 8c-1.5-3-5-4-5-1.5S10 8 12 8zm0 0c1.5-3 5-4 5-1.5S14 8 12 8z"/></svg>';
 
   /* utilidades */
   function h(tag, attrs) {
@@ -509,7 +719,116 @@
     if (/jwt|token/i.test(m)) return "Sua sessão expirou. Saia e entre de novo.";
     if (/should be different/i.test(m)) return "A nova senha precisa ser diferente da atual.";
     if (/password/i.test(m)) return "Senha não aceita. Use pelo menos 8 caracteres.";
+    if (/row-level security|permission denied/i.test(m)) return "Sem permissão para isso. Saia e entre de novo.";
     return m ? "Erro: " + m : "Algo deu errado. Tente de novo.";
+  }
+
+  /* partes novas do banco (convidados, presentes, mural) ainda não ativadas? */
+  function semTabela(err) {
+    if (!err) return false;
+    var c = String(err.code || ""), m = String(err.message || "");
+    return c === "PGRST205" || c === "PGRST204" || c === "42P01" || c === "42703" || /schema cache|does not exist/i.test(m);
+  }
+  function faixaBanco(aba, falta) {
+    var p = $("#aba-" + aba + " [data-banco]");
+    p.textContent = "Esta parte ainda não foi ativada no banco de dados. Quem cuida do site precisa rodar a atualização do Supabase (arquivo supabase/2026-11-13-convidados-presentes-mural.sql do painel).";
+    p.hidden = !falta;
+    $$("#aba-" + aba + " [data-banco-acao]").forEach(function (b) { b.disabled = !!falta; });
+  }
+
+  /* dinheiro */
+  var fmtMoeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  function moeda(v) { return fmtMoeda.format(Number(v) || 0); }
+  function lerValor(s) {
+    s = String(s == null ? "" : s).replace(/R\$/gi, "").replace(/\s/g, "");
+    if (!s) return NaN;
+    if (/,\d{1,2}$/.test(s)) s = s.replace(/\./g, "").replace(",", ".");
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    else s = s.replace(/,/g, "");
+    if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+    return Math.round(Number(s) * 100) / 100;
+  }
+  function valorCampo(n) { return isFinite(n) && n > 0 ? String(n.toFixed(2)).replace(".", ",") : ""; }
+  function pessoas(a, c) {
+    return a + (a === 1 ? " adulto" : " adultos") + (c ? ", " + c + (c === 1 ? " criança" : " crianças") : "");
+  }
+
+  /* planilhas: CSV (; ou ,) e Excel (.xlsx) */
+  var xlsxPromessa = null;
+  function carregarXLSX() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (!xlsxPromessa) xlsxPromessa = new Promise(function (ok, falha) {
+      var s = document.createElement("script");
+      s.src = XLSX_URL; s.integrity = XLSX_SRI; s.crossOrigin = "anonymous";
+      s.onload = function () { window.XLSX ? ok(window.XLSX) : falha(new Error("leitor de Excel")); };
+      s.onerror = function () { xlsxPromessa = null; falha(new Error("Não consegui carregar o leitor de Excel. Verifique a internet ou salve a planilha como CSV.")); };
+      document.head.appendChild(s);
+    });
+    return xlsxPromessa;
+  }
+  async function lerPlanilha(arq) {
+    var buf = await arq.arrayBuffer();
+    if (/\.(xlsx|xlsm|xls|ods)$/i.test(arq.name || "")) {
+      var X = await carregarXLSX();
+      var wb = X.read(buf, { type: "array", cellDates: true });
+      var ws = wb.Sheets[wb.SheetNames[0]];
+      return X.utils.sheet_to_json(ws, { header: 1, raw: false, defval: "", blankrows: false, dateNF: "dd/mm/yyyy hh:mm" })
+        .map(function (l) { return l.map(function (c) { return String(c == null ? "" : c); }); })
+        .filter(function (l) { return l.some(function (x) { return x.trim(); }); });
+    }
+    var txt;
+    try { txt = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
+    catch (e) { txt = new TextDecoder("windows-1252").decode(buf); }
+    return lerCSV(txt);
+  }
+  /* acha a linha de cabeçalho (nas 10 primeiras) e o número de cada coluna */
+  function colunas(linhas, regras, padrao) {
+    for (var i = 0; i < Math.min(10, linhas.length); i++) {
+      var cab = linhas[i].map(function (x) { return semAcento(x).replace(/\s+/g, " ").trim(); });
+      var col = {}, usadas = {};
+      Object.keys(regras).forEach(function (k) {
+        col[k] = cab.findIndex(function (x, j) { return !usadas[j] && regras[k].test(x); });
+        if (col[k] >= 0) usadas[col[k]] = true;
+      });
+      if (col.nome >= 0) return { col: col, dados: linhas.slice(i + 1) };
+    }
+    return { col: padrao, dados: linhas };
+  }
+  function pegar(l, i) { return i >= 0 && l[i] != null ? String(l[i]).trim() : ""; }
+  function nomeLimpo(s) { return String(s || "").trim().replace(/\s+/g, " "); }
+  function chaveNome(s) { return semAcento(nomeLimpo(s)); }
+  /* data de planilha (dd/mm/aaaa [hh:mm] ou ISO) -> ISO com fuso de Palmas, ou null */
+  function dataPlanilha(s) {
+    s = String(s || "").trim();
+    var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})(?:[ T,]+(\d{1,2}):(\d{2}))?/);
+    if (m) {
+      var ano = +m[3] < 100 ? 2000 + +m[3] : +m[3], mes = +m[2], dia = +m[1];
+      if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
+      var p2 = function (n) { return String(n).padStart(2, "0"); };
+      return ano + "-" + p2(mes) + "-" + p2(dia) + "T" + p2(m[4] ? Math.min(23, +m[4]) : 12) + ":" + (m[5] || "00") + ":00-03:00";
+    }
+    if (/^\d{4}-\d{2}-\d{2}/.test(s)) { var d = new Date(s.length === 10 ? s + "T12:00:00-03:00" : s); return isNaN(d) ? null : d.toISOString(); }
+    return null;
+  }
+  function baixarCSV(nome, linhas) {
+    var csv = "﻿" + linhas.map(function (l) { return l.map(celula).join(";"); }).join("\r\n") + "\r\n";
+    var url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    var a = h("a", { href: url, download: nome + "-" + new Date().toISOString().slice(0, 10) + ".csv" });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+  /* abre o seletor de arquivo e devolve as linhas da planilha */
+  function aoEscolherPlanilha(input, fn) {
+    input.addEventListener("change", async function () {
+      var arq = input.files && input.files[0];
+      input.value = "";
+      if (!arq) return;
+      var linhas;
+      try { linhas = await lerPlanilha(arq); }
+      catch (e) { alert((e && e.message) || "Não consegui ler a planilha."); return; }
+      try { await fn(linhas, arq); }
+      catch (e) { carregando(""); alert(msgErro(e)); }
+    });
   }
 
   /* telas */
@@ -597,8 +916,10 @@
   /* abas */
   $$(".abas button").forEach(function (b) {
     b.addEventListener("click", function () {
-      $$(".abas button").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
-      ["presencas", "recados", "visitas", "pix", "fotos", "conta"].forEach(function (a) { $("#aba-" + a).hidden = a !== b.dataset.aba; });
+      $$(".abas button").forEach(function (x) {
+        x.setAttribute("aria-selected", x === b ? "true" : "false");
+        $("#aba-" + x.dataset.aba).hidden = x !== b;
+      });
       window.scrollTo(0, 0);
     });
   });
@@ -606,7 +927,10 @@
   /* dados */
   async function carregarTudo() {
     carregando("Carregando...");
-    try { await Promise.all([carregarPresencas(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix()]); }
+    try {
+      await Promise.all([carregarPresencas(), carregarConvidados(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix(), carregarPresentes()]);
+      desenharConvidados();
+    }
     finally { carregando(""); }
   }
 
@@ -624,6 +948,7 @@
     });
     $("#n-vao").textContent = vao; $("#n-adultos").textContent = adultos; $("#n-criancas").textContent = criancas;
     $("#n-pessoas").textContent = adultos + criancas; $("#n-naovao").textContent = naovao;
+    if (estado.convOk) desenharConvidados();
 
     var termo = semAcento(estado.busca.trim());
     var lista = estado.presencas.filter(function (p) {
@@ -727,12 +1052,7 @@
       .forEach(function (p) {
         linhas.push([p.nome, p.vai ? "Sim" : "Não", p.adultos, p.criancas, p.telefone, p.mensagem, p.origem, dataBR(p.criado_em)]);
       });
-    var csv = "﻿" + linhas.map(function (l) { return l.map(celula).join(";"); }).join("\r\n") + "\r\n";
-    var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    var url = URL.createObjectURL(blob);
-    var a = h("a", { href: url, download: "presencas-ana-e-matheus-" + new Date().toISOString().slice(0, 10) + ".csv" });
-    document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+    baixarCSV("presencas-ana-e-matheus", linhas);
   });
 
   /* importar CSV: colunas nome; vai; adultos; crianças */
@@ -762,31 +1082,35 @@
     if (/^(nao|n|no|0|false|nao vai|ausente)$/.test(s)) return false;
     return null;
   }
+  /* status de planilha (casar.com e outras) -> "sim", "nao" ou null (sem resposta) */
+  function respostaDe(v) {
+    var s = semAcento(v).replace(/\s+/g, " ").trim();
+    if (!s || /nao confirm|pendente|aguard|sem resposta|nao respond|em aberto|talvez/.test(s)) return null;
+    if (/^(nao|n|no|0|false)$|nao vai|nao vou|nao ira|nao compar|nao pod|recus|ausen|declin/.test(s)) return "nao";
+    if (/^(sim|s|yes|y|1|true|ok|x)$|confirm|presen|\bvai\b|\bvou\b|\bira\b|compar/.test(s)) return "sim";
+    return null;
+  }
   $("#importar").addEventListener("click", function () { $("#arquivo-csv").value = ""; $("#arquivo-csv").click(); });
-  $("#arquivo-csv").addEventListener("change", async function () {
-    var arq = this.files && this.files[0];
-    if (!arq) return;
-    var buf = await arq.arrayBuffer(), txt;
-    try { txt = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
-    catch (e) { txt = new TextDecoder("windows-1252").decode(buf); }
-    var linhas = lerCSV(txt);
-    var cab = (linhas[0] || []).map(function (x) { return semAcento(x).trim(); });
-    var col = { nome: 0, vai: 1, adultos: 2, criancas: 3 };
-    if (cab.indexOf("nome") >= 0) {
-      col = {
-        nome: cab.indexOf("nome"),
-        vai: cab.findIndex(function (x) { return /^(vai|presenca|confirmado|status)/.test(x); }),
-        adultos: cab.findIndex(function (x) { return /^adulto/.test(x); }),
-        criancas: cab.findIndex(function (x) { return /^crianca/.test(x); })
-      };
-      linhas = linhas.slice(1);
-    }
-    var novos = [], ignorados = 0;
+  aoEscolherPlanilha($("#arquivo-csv"), async function (linhas, arq) {
+    var m = colunas(linhas, {
+      nome: /^(nome|convidado|name)/, vai: /^(vai|presenca|confirm|status|situacao|resposta)/,
+      adultos: /adulto/, criancas: /crianca/
+    }, { nome: 0, vai: 1, adultos: 2, criancas: 3 });
+    var col = m.col;
+    linhas = m.dados;
+    var novos = [], ignorados = 0, pendentes = 0;
     linhas.forEach(function (l) {
-      var nome = String(l[col.nome] || "").trim().replace(/\s+/g, " ");
+      var nome = nomeLimpo(pegar(l, col.nome));
       if (nome.length < 2) { ignorados++; return; }
-      var vai = col.vai >= 0 ? simNao(l[col.vai]) : true;
-      if (vai === null) vai = true;
+      var vai = true;
+      if (pegar(l, col.vai)) {
+        vai = simNao(l[col.vai]);
+        if (vai === null) {
+          var rsp = respostaDe(l[col.vai]);
+          if (!rsp) { pendentes++; return; }
+          vai = rsp === "sim";
+        }
+      }
       novos.push({
         nome: nome.slice(0, 120), vai: vai,
         adultos: vai ? inteiro(col.adultos >= 0 ? l[col.adultos] : "", 0, 20, 1) : 0,
@@ -794,13 +1118,18 @@
         origem: "casar"
       });
     });
-    if (!novos.length) { alert("Nenhuma linha válida encontrada. O arquivo precisa ter as colunas: nome; vai; adultos; crianças."); return; }
+    if (!novos.length) {
+      alert(pendentes ? "Ninguém nesse arquivo respondeu ainda (" + pendentes + " sem resposta). Para trazer a lista inteira, use a aba Convidados."
+                      : "Nenhuma linha válida encontrada. O arquivo precisa ter as colunas: nome; vai; adultos; crianças.");
+      return;
+    }
     var existentes = {};
     estado.presencas.forEach(function (p) { existentes[semAcento(p.nome)] = true; });
     var repetidos = novos.filter(function (n) { return existentes[semAcento(n.nome)]; }).length;
     var texto = "Importar " + novos.length + " confirmação(ões) do arquivo \"" + arq.name + "\" como origem casar.com?";
     if (repetidos) texto += "\n\nAtenção: " + repetidos + " nome(s) já existem na lista e ficarão duplicados.";
     if (ignorados) texto += "\n" + ignorados + " linha(s) sem nome serão ignoradas.";
+    if (pendentes) texto += "\n" + pendentes + " pessoa(s) ainda sem resposta ficam de fora (importe a lista inteira na aba Convidados).";
     texto += "\n\nPrimeiro: " + novos[0].nome + " (" + (novos[0].vai ? "vai, " + novos[0].adultos + " adulto(s), " + novos[0].criancas + " criança(s)" : "não vai") + ")";
     if (!confirm(texto)) return;
     carregando("Importando " + novos.length + "...");
@@ -811,9 +1140,483 @@
     alert(novos.length + " confirmação(ões) importada(s).");
   });
 
-  /* recados */
+  /* formulários que abrem e fecham (Adicionar / Editar) */
+  function abrirForm(form, titulo) {
+    aviso(form, "", "");
+    var t = $("[data-titulo]", form); if (t && titulo) t.textContent = titulo;
+    form.hidden = false;
+    form.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    var p = $("input:not([type=hidden]):not([type=radio]):not([type=checkbox]), select", form);
+    if (p) setTimeout(function () { try { p.focus({ preventScroll: true }); } catch (e) {} }, 60);
+  }
+  function fecharForm(form) { form.reset(); delete form.dataset.id; aviso(form, "", ""); form.hidden = true; }
+  $$("form [data-cancelar]").forEach(function (b) { b.addEventListener("click", function () { var f = b.closest("form"); fecharForm(f); if (f.aoFechar) f.aoFechar(); }); });
+  function seg(grupo, fn) {
+    $$("button", grupo).forEach(function (b) {
+      b.addEventListener("click", function () {
+        $$("button", grupo).forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+        fn(b.dataset.f || b.dataset.v);
+      });
+    });
+  }
+  function botaoApagar(txt, fn) { return h("button", { class: "btn perigo peq", type: "button", text: txt || "Apagar", onclick: fn }); }
+
+  /* ================= convidados ================= */
+  var LIGA = { da: 1, de: 1, di: 1, do: 1, das: 1, dos: 1, e: 1 };
+  function partesNome(nome) {
+    return semAcento(nome).replace(/[^a-z0-9]+/g, " ").trim().split(" ").filter(function (t) { return t && !LIGA[t]; });
+  }
+  /* mesmo primeiro nome e todas as partes do nome menor dentro do maior ("Maria Silva" = "Maria da Silva Santos") */
+  function mesmoNome(a, b) {
+    if (!a.length || !b.length || a[0] !== b[0]) return false;
+    var curto = a.length <= b.length ? a : b, longo = curto === a ? b : a;
+    if (curto.length === 1) return longo.length === 1;
+    return curto.every(function (t) { return longo.indexOf(t) >= 0; });
+  }
+  function ligarPresencas() {
+    var ps = estado.presencas.slice().sort(function (a, b) { return new Date(b.criado_em) - new Date(a.criado_em); })
+      .map(function (p) { return { p: p, t: partesNome(p.nome) }; });
+    var usadas = {};
+    estado.convidados.forEach(function (c) {
+      var t = partesNome(c.nome); c._presenca = null;
+      for (var i = 0; i < ps.length; i++) if (mesmoNome(t, ps[i].t)) { c._presenca = ps[i].p; usadas[ps[i].p.id] = true; break; }
+    });
+    estado.semConvite = estado.presencas.filter(function (p) { return !usadas[p.id]; }).length;
+  }
+  function situacao(c) { return c._presenca ? (c._presenca.vai ? "sim" : "nao") : (c.resposta || "sem"); }
+  function linkWhats(c, lembrete) {
+    var d = String(c.telefone || "").replace(/\D/g, "");
+    if (d.length === 10 || d.length === 11) d = "55" + d;
+    if (!/^55\d{10,11}$/.test(d)) return null;
+    var txt = lembrete
+      ? "Oi, " + c.nome.split(" ")[0] + "! Tudo bem? Estamos contando os dias para o nosso casamento, dia 7 de janeiro de 2027, às 19h30, no Cabana do Lago, em Palmas. Você consegue confirmar sua presença pelo site? " + SITE + "#confirmacao\nCom carinho, Ana Caroline e Matheus"
+      : "Oi, " + c.nome.split(" ")[0] + "!";
+    return "https://wa.me/" + d + "?text=" + encodeURIComponent(txt);
+  }
+
+  async function carregarConvidados() {
+    var r = await sb.from("convidados").select("*").order("nome", { ascending: true }).limit(5000);
+    estado.convOk = !r.error;
+    faixaBanco("convidados", semTabela(r.error));
+    if (r.error) { estado.convidados = []; $("#c-contador").textContent = semTabela(r.error) ? "" : msgErro(r.error); desenharConvidados(); return; }
+    estado.convidados = r.data || [];
+    desenharConvidados();
+  }
+  function desenharConvidados() {
+    ligarPresencas();
+    var n = { sim: 0, nao: 0, sem: 0 }, pessoasTot = 0;
+    estado.convidados.forEach(function (c) { n[situacao(c)]++; pessoasTot += (c.adultos || 0) + (c.criancas || 0); });
+    $("#c-pessoas").textContent = pessoasTot; $("#c-total").textContent = estado.convidados.length;
+    $("#c-sim").textContent = n.sim; $("#c-nao").textContent = n.nao; $("#c-sem").textContent = n.sem;
+
+    var termo = semAcento(estado.cBusca.trim());
+    var lista = estado.convidados.filter(function (c) {
+      if (estado.cFiltro !== "todos" && situacao(c) !== estado.cFiltro) return false;
+      return !termo || semAcento(c.nome + " " + (c.grupo || "")).indexOf(termo) >= 0;
+    }).sort(function (a, b) { return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR"); });
+
+    var alvo = $("#c-lista"); alvo.textContent = "";
+    if (!estado.convOk) return;
+    var tot = estado.convidados.length;
+    $("#c-contador").textContent = (lista.length === tot ? tot + (tot === 1 ? " convidado" : " convidados") : lista.length + " de " + tot + " convidados") +
+      (estado.semConvite && tot ? " · " + estado.semConvite + (estado.semConvite === 1 ? " confirmação do site não bate" : " confirmações do site não batem") + " com nenhum nome da lista (veja em Presenças)" : "");
+    if (!lista.length) {
+      alvo.appendChild(h("div", { class: "vazio", text: tot ? "Nenhum convidado com esse filtro." : "A lista está vazia. Importe a planilha do casar.com ou adicione os convidados." }));
+      return;
+    }
+    var rotulo = { sim: ["sim", "Vai"], nao: ["nao", "Não vai"], sem: ["espera", "Sem resposta"] };
+    var origemP = { site: "pelo site", casar: "pelo casar.com", manual: "no painel" };
+    lista.forEach(function (c) {
+      var s = situacao(c), p = c._presenca;
+      var tel = c.telefone ? h("a", { href: "tel:" + c.telefone.replace(/[^\d+]/g, ""), text: c.telefone }) : null;
+      var zap = linkWhats(c, s === "sem");
+      var resp = p ? "Respondeu " + (origemP[p.origem] || "") + " em " + dataBR(p.criado_em) + (p.vai ? ": " + pessoas(p.adultos, p.criancas) : "")
+                   : (c.resposta ? "Resposta marcada no painel" : null);
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" },
+          h("div", { class: "nome", text: c.nome }),
+          h("span", { class: "selo " + rotulo[s][0], text: rotulo[s][1] })),
+        h("div", { class: "det" },
+          c.grupo ? h("span", { text: c.grupo }) : null,
+          h("span", { text: "Convite: " + pessoas(c.adultos, c.criancas) }), tel),
+        resp ? h("div", { class: "det" }, h("span", { text: resp })) : null,
+        c.observacao ? h("div", { class: "msg", text: c.observacao }) : null,
+        h("div", { class: "pe empilha" },
+          h("span", { text: c.origem === "manual" ? "Adicionado no painel" : "Importado da planilha" }),
+          h("div", { class: "botoes-item" },
+            zap ? h("a", { class: "btn peq", href: zap, target: "_blank", rel: "noopener", text: s === "sem" ? "Lembrar no WhatsApp" : "WhatsApp" }) : null,
+            h("button", { class: "btn peq", type: "button", text: "Editar", onclick: function () { editarConvidado(c); } }),
+            botaoApagar("Apagar", function () { apagarConvidado(c, this); })))
+      ));
+    });
+  }
+  $("#c-busca").addEventListener("input", function () { estado.cBusca = this.value; desenharConvidados(); });
+  seg($("#c-filtro"), function (f) { estado.cFiltro = f; desenharConvidados(); });
+
+  var fConv = $("#f-conv");
+  $("#c-novo").addEventListener("click", function () {
+    if (!fConv.hidden && !fConv.dataset.id) { fecharForm(fConv); return; }
+    fecharForm(fConv); abrirForm(fConv, "Adicionar convidado");
+  });
+  function editarConvidado(c) {
+    fecharForm(fConv);
+    var f = fConv.elements;
+    f.nome.value = c.nome; f.grupo.value = c.grupo || ""; f.telefone.value = c.telefone || "";
+    f.adultos.value = c.adultos; f.criancas.value = c.criancas; f.observacao.value = c.observacao || "";
+    $("input[name=resposta][value='" + (c.resposta || "") + "']", fConv).checked = true;
+    fConv.dataset.id = c.id;
+    abrirForm(fConv, "Editar convidado");
+  }
+  fConv.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fConv.elements, btn = $("button[type=submit]", fConv), id = fConv.dataset.id;
+    var nome = nomeLimpo(f.nome.value);
+    if (nome.length < 2) { aviso(fConv, "erro", "Informe o nome."); f.nome.focus(); return; }
+    var linha = {
+      nome: nome.slice(0, 120),
+      grupo: nomeLimpo(f.grupo.value).slice(0, 60) || null,
+      telefone: f.telefone.value.trim().slice(0, 30) || null,
+      adultos: inteiro(f.adultos.value, 0, 20, 1), criancas: inteiro(f.criancas.value, 0, 20, 0),
+      resposta: $("input[name=resposta]:checked", fConv).value || null,
+      observacao: f.observacao.value.trim().slice(0, 500) || null
+    };
+    if (!id && estado.convidados.some(function (c) { return chaveNome(c.nome) === chaveNome(nome); }) &&
+        !confirm("Já existe \"" + nome + "\" na lista. Adicionar mesmo assim?")) return;
+    ocupado(btn, "Salvando...");
+    var r = id ? await sb.from("convidados").update(linha).eq("id", id).select().single()
+               : await sb.from("convidados").insert(Object.assign({ origem: "manual" }, linha)).select().single();
+    ocupado(btn);
+    if (r.error) { aviso(fConv, "erro", msgErro(r.error)); return; }
+    if (id) estado.convidados = estado.convidados.map(function (c) { return c.id === id ? r.data : c; });
+    else estado.convidados.push(r.data);
+    fecharForm(fConv);
+    desenharConvidados();
+  });
+  async function apagarConvidado(c, btn) {
+    if (!confirm("Tirar \"" + c.nome + "\" da lista de convidados? A confirmação de presença (se houver) continua na aba Presenças.")) return;
+    ocupado(btn, "Apagando...");
+    var r = await sb.from("convidados").delete().eq("id", c.id).select("id");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível apagar."); return; }
+    estado.convidados = estado.convidados.filter(function (x) { return x.id !== c.id; });
+    desenharConvidados();
+  }
+
+  $("#c-importar").addEventListener("click", function () { $("#c-arquivo").click(); });
+  aoEscolherPlanilha($("#c-arquivo"), async function (linhas, arq) {
+    var m = colunas(linhas, {
+      nome: /^(nome|convidado|name)/, telefone: /(telefone|celular|whats|fone|phone)/,
+      adultos: /adulto/, criancas: /crianca/, grupo: /^(grupo|familia|lado|categoria|tipo de convidado)/,
+      resposta: /^(status|situacao|presenca|confirm|resposta|rsvp|vai)/, observacao: /^(obs|nota|coment)/
+    }, { nome: 0, telefone: 1, adultos: 2, criancas: 3, grupo: 4, resposta: -1, observacao: -1 });
+    var col = m.col, ja = {}, novos = [], repetidos = 0, ignorados = 0;
+    estado.convidados.forEach(function (c) { ja[chaveNome(c.nome)] = true; });
+    m.dados.forEach(function (l) {
+      var nome = nomeLimpo(pegar(l, col.nome)).slice(0, 120);
+      if (nome.length < 2) { ignorados++; return; }
+      if (ja[chaveNome(nome)]) { repetidos++; return; }
+      ja[chaveNome(nome)] = true;
+      novos.push({
+        nome: nome, telefone: pegar(l, col.telefone).slice(0, 30) || null,
+        adultos: inteiro(pegar(l, col.adultos), 0, 20, 1), criancas: inteiro(pegar(l, col.criancas), 0, 20, 0),
+        grupo: nomeLimpo(pegar(l, col.grupo)).slice(0, 60) || null,
+        resposta: respostaDe(pegar(l, col.resposta)), observacao: pegar(l, col.observacao).slice(0, 500) || null,
+        origem: "planilha"
+      });
+    });
+    if (!novos.length) {
+      alert(repetidos ? "Todos os nomes desse arquivo já estão na lista." : "Nenhuma linha válida. A planilha precisa ter uma coluna com o nome do convidado.");
+      return;
+    }
+    /* quem já respondeu (no casar.com) também entra em Presenças, se ainda não estiver lá */
+    var ps = estado.presencas.map(function (p) { return partesNome(p.nome); });
+    var presencasNovas = novos.filter(function (c) {
+      if (!c.resposta) return false;
+      var t = partesNome(c.nome);
+      return !ps.some(function (x) { return mesmoNome(t, x); });
+    }).map(function (c) {
+      var vai = c.resposta === "sim";
+      return { nome: c.nome, vai: vai, adultos: vai ? c.adultos : 0, criancas: vai ? c.criancas : 0, telefone: c.telefone, origem: "casar" };
+    });
+    var sim = novos.filter(function (c) { return c.resposta === "sim"; }).length, nao = novos.filter(function (c) { return c.resposta === "nao"; }).length;
+    var texto = "Importar " + novos.length + " convidado(s) do arquivo \"" + arq.name + "\"?";
+    if (repetidos) texto += "\n" + repetidos + " nome(s) já estão na lista e serão pulados.";
+    if (ignorados) texto += "\n" + ignorados + " linha(s) sem nome serão ignoradas.";
+    if (sim || nao) texto += "\n\nNo arquivo: " + sim + " confirmaram e " + nao + " não vão." +
+      (presencasNovas.length ? " " + presencasNovas.length + " deles também entram na aba Presenças (como casar.com)." : "");
+    texto += "\n\nPrimeiro: " + novos[0].nome + " (" + pessoas(novos[0].adultos, novos[0].criancas) + (novos[0].telefone ? ", " + novos[0].telefone : "") + ")";
+    if (!confirm(texto)) return;
+    carregando("Importando " + novos.length + "...");
+    var r = await sb.from("convidados").insert(novos);
+    if (r.error) { carregando(""); alert("Não foi possível importar: " + msgErro(r.error)); return; }
+    if (presencasNovas.length) {
+      var r2 = await sb.from("presencas").insert(presencasNovas);
+      if (r2.error) alert("Convidados importados, mas as respostas não entraram em Presenças: " + msgErro(r2.error));
+    }
+    await Promise.all([carregarConvidados(), carregarPresencas()]);
+    desenharConvidados();
+    carregando("");
+    alert(novos.length + " convidado(s) importado(s)." + (presencasNovas.length ? " " + presencasNovas.length + " resposta(s) adicionada(s) em Presenças." : ""));
+  });
+  $("#c-exportar").addEventListener("click", function () {
+    var txt = { sim: "Vai", nao: "Não vai", sem: "Sem resposta" };
+    var linhas = [["Nome", "Grupo", "Telefone", "Adultos", "Crianças", "Situação", "Confirmados (adultos)", "Confirmados (crianças)", "Observação"]];
+    estado.convidados.slice().sort(function (a, b) { return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR"); })
+      .forEach(function (c) {
+        var p = c._presenca, s = situacao(c);
+        linhas.push([c.nome, c.grupo, c.telefone, c.adultos, c.criancas, txt[s],
+          p && p.vai ? p.adultos : (s === "sim" ? c.adultos : ""), p && p.vai ? p.criancas : (s === "sim" ? c.criancas : ""), c.observacao]);
+      });
+    baixarCSV("convidados-ana-e-matheus", linhas);
+  });
+
+  /* ================= presentes ================= */
+  async function carregarPresentes() {
+    var rs = await Promise.all([
+      sb.from("presentes").select("*").order("ordem", { ascending: true }).order("criado_em", { ascending: true }).limit(1000),
+      sb.from("presentes_recebidos").select("*").order("criado_em", { ascending: false }).limit(5000)
+    ]);
+    var err = rs[0].error || rs[1].error;
+    estado.presOk = !err;
+    faixaBanco("presentes", semTabela(err));
+    estado.presentes = err ? [] : rs[0].data || [];
+    estado.recebidos = err ? [] : rs[1].data || [];
+    if (err && !semTabela(err)) $("#p-contador").textContent = msgErro(err);
+    desenharPresentes();
+  }
+  function avisoSemPix() {
+    $("#p-sem-pix").hidden = !(estado.presOk && pixLido && !(pixAtual && pixAtual.chave));
+  }
+  function miniatura(url) {
+    var d = h("span", { class: "miniatura", "aria-hidden": "true" }); d.innerHTML = ICONE_PRESENTE;
+    if (!url) return d;
+    return h("img", { class: "miniatura", src: url, alt: "", loading: "lazy", referrerpolicy: "no-referrer", onerror: function () { this.replaceWith(d); } });
+  }
+  function desenharPresentes() {
+    avisoSemPix();
+    var ativos = estado.presentes.filter(function (p) { return p.ativo; });
+    var total = 0, conferido = 0, conferir = 0, dadas = 0, cotas = 0;
+    estado.recebidos.forEach(function (r) { total += +r.valor || 0; if (r.confirmado) conferido += +r.valor || 0; else conferir++; });
+    ativos.forEach(function (p) { dadas += Math.min(p.cotas_dadas || 0, p.cotas); cotas += p.cotas; });
+    $("#p-total").textContent = moeda(total); $("#p-conferido").textContent = moeda(conferido);
+    $("#p-itens").textContent = ativos.length; $("#p-conferir").textContent = conferir;
+    $("#p-cotas").textContent = cotas ? dadas + "/" + cotas : "0";
+
+    var alvo = $("#p-lista"); alvo.textContent = "";
+    if (estado.presOk) $("#p-contador").textContent = estado.presentes.length + (estado.presentes.length === 1 ? " item" : " itens") +
+      (estado.presentes.length !== ativos.length ? " (" + (estado.presentes.length - ativos.length) + " escondido(s) do site)" : "");
+    if (estado.presOk && !estado.presentes.length) alvo.appendChild(h("div", { class: "vazio", text: "Nenhum presente cadastrado. Adicione os itens e cotas da lista (ou importe uma planilha)." }));
+    estado.presentes.forEach(function (p) {
+      var d = p.cotas_dadas || 0, pct = Math.min(100, Math.round(d / p.cotas * 100));
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" },
+          miniatura(p.imagem),
+          h("div", { class: "nome" }, p.nome, h("small", { text: moeda(p.valor) + (p.cotas > 1 ? " por cota · total " + moeda(p.valor * p.cotas) : "") })),
+          !p.ativo ? h("span", { class: "selo nao", text: "Escondido" }) : (d >= p.cotas ? h("span", { class: "selo sim", text: "Completo" }) : null)),
+        p.descricao ? h("div", { class: "msg", text: p.descricao }) : null,
+        h("div", { class: "prog", role: "img", "aria-label": pct + "% presenteado" }, h("span", { style: "width:" + pct + "%" })),
+        h("div", { class: "pe empilha" },
+          h("span", { text: d + " de " + p.cotas + (p.cotas === 1 ? " cota presenteada" : " cotas presenteadas") + " · posição " + p.ordem }),
+          h("div", { class: "botoes-item" },
+            h("button", { class: "btn peq", type: "button", text: "Editar", onclick: function () { editarPresente(p); } }),
+            botaoApagar("Apagar", function () { apagarPresente(p, this); })))
+      ));
+    });
+    desenharRecebidos();
+    preencherSelectPresentes();
+  }
+  seg($("#p-vista"), function (v) {
+    estado.pVista = v;
+    $("#p-v-itens").hidden = v !== "itens"; $("#p-v-recebidos").hidden = v !== "recebidos";
+  });
+
+  /* formulário de presente (com foto opcional) */
+  var fPres = $("#f-presente"), fotoPres = { url: null, blob: null, previa: null };
+  var fpBox = $(".foto-presente", fPres), fpImg = $("img", fpBox), fpInput = $("input[type=file]", fpBox);
+  function mostrarFotoPres() {
+    if (fotoPres.previa) URL.revokeObjectURL(fotoPres.previa);
+    fotoPres.previa = fotoPres.blob ? URL.createObjectURL(fotoPres.blob) : null;
+    var src = fotoPres.previa || fotoPres.url;
+    fpImg.hidden = !src; if (src) fpImg.src = src; else fpImg.removeAttribute("src");
+    $("[data-foto=tirar]", fpBox).hidden = !src;
+    $("[data-foto=escolher]", fpBox).textContent = src ? "Trocar foto" : "Escolher foto";
+  }
+  function limparFotoPres() { fotoPres.url = null; fotoPres.blob = null; mostrarFotoPres(); }
+  fPres.aoFechar = limparFotoPres;
+  $("[data-foto=escolher]", fpBox).addEventListener("click", function () { fpInput.value = ""; fpInput.click(); });
+  $("[data-foto=tirar]", fpBox).addEventListener("click", limparFotoPres);
+  fpInput.addEventListener("change", async function () {
+    var arq = fpInput.files && fpInput.files[0]; if (!arq) return;
+    var b = $("[data-foto=escolher]", fpBox); ocupado(b, "Preparando...");
+    try { fotoPres.blob = (await reduzir(arq, 900)).blob; aviso(fPres, "", ""); }
+    catch (e) { aviso(fPres, "erro", e.message || "Não consegui abrir a foto."); }
+    ocupado(b); mostrarFotoPres();
+  });
+  $("#p-novo").addEventListener("click", function () {
+    if (!fPres.hidden && !fPres.dataset.id) { fecharForm(fPres); limparFotoPres(); return; }
+    fecharForm(fPres); limparFotoPres();
+    fPres.elements.ordem.value = estado.presentes.reduce(function (m, p) { return Math.max(m, p.ordem + 1); }, 1);
+    abrirForm(fPres, "Novo presente");
+  });
+  function editarPresente(p) {
+    fecharForm(fPres);
+    var f = fPres.elements;
+    f.nome.value = p.nome; f.descricao.value = p.descricao || ""; f.valor.value = valorCampo(+p.valor);
+    f.cotas.value = p.cotas; f.ordem.value = p.ordem; f.ativo.checked = !!p.ativo;
+    fotoPres.url = p.imagem || null; fotoPres.blob = null; mostrarFotoPres();
+    fPres.dataset.id = p.id;
+    abrirForm(fPres, "Editar presente");
+  }
+  fPres.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fPres.elements, btn = $("button[type=submit]", fPres), id = fPres.dataset.id;
+    var nome = nomeLimpo(f.nome.value), valor = lerValor(f.valor.value);
+    if (nome.length < 2) { aviso(fPres, "erro", "Informe o nome do presente."); f.nome.focus(); return; }
+    if (!(valor > 0) || valor > 100000) { aviso(fPres, "erro", "Informe o valor da cota em reais, ex.: 150,00."); f.valor.focus(); return; }
+    var linha = {
+      nome: nome.slice(0, 120), descricao: f.descricao.value.trim().slice(0, 500) || null, valor: valor,
+      cotas: inteiro(f.cotas.value, 1, 1000, 1), ordem: inteiro(f.ordem.value, 0, 999, 0), ativo: f.ativo.checked
+    };
+    ocupado(btn, "Salvando...");
+    try {
+      linha.imagem = fotoPres.blob ? await enviarFoto("presente", fotoPres.blob) : fotoPres.url;
+      var r = id ? await sb.from("presentes").update(linha).eq("id", id).select().single()
+                 : await sb.from("presentes").insert(linha).select().single();
+      if (r.error) throw r.error;
+      fecharForm(fPres); limparFotoPres();
+      await carregarPresentes();
+    } catch (err) { aviso(fPres, "erro", msgErro(err)); }
+    ocupado(btn);
+  });
+  async function apagarPresente(p, btn) {
+    var dados = p.cotas_dadas ? "\n\nOs avisos de quem já deu esse presente continuam em “Quem presenteou”." : "";
+    if (!confirm("Apagar \"" + p.nome + "\" da lista de presentes? Se quiser só tirar do site, use Editar > Mostrar no site." + dados)) return;
+    ocupado(btn, "Apagando...");
+    var r = await sb.from("presentes").delete().eq("id", p.id).select("id");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível apagar."); return; }
+    await carregarPresentes();
+  }
+  $("#p-importar").addEventListener("click", function () { $("#p-arquivo").click(); });
+  aoEscolherPlanilha($("#p-arquivo"), async function (linhas, arq) {
+    var m = colunas(linhas, {
+      nome: /^(nome|presente|item|produto|titulo)/, valor: /^(valor|preco|price)/, cotas: /^(cotas|quantidade|qtd|qtde|numero de cotas)/,
+      descricao: /^(descri|detalhe)/, imagem: /^(imagem|foto|image|url)/
+    }, { nome: 0, valor: 1, cotas: 2, descricao: 3, imagem: 4 });
+    var col = m.col, novos = [], ruins = 0, ordem = estado.presentes.reduce(function (x, p) { return Math.max(x, p.ordem + 1); }, 1);
+    m.dados.forEach(function (l) {
+      var nome = nomeLimpo(pegar(l, col.nome)).slice(0, 120), valor = lerValor(pegar(l, col.valor));
+      if (nome.length < 2 || !(valor > 0) || valor > 100000) { ruins++; return; }
+      var img = pegar(l, col.imagem);
+      novos.push({ nome: nome, valor: valor, cotas: inteiro(pegar(l, col.cotas), 1, 1000, 1), descricao: pegar(l, col.descricao).slice(0, 500) || null,
+                   imagem: /^https:\/\/\S+$/.test(img) && img.length <= 500 ? img : null, ordem: ordem++, ativo: true });
+    });
+    if (!novos.length) { alert("Nenhum presente válido. A planilha precisa ter as colunas: nome; valor (da cota); cotas."); return; }
+    var texto = "Importar " + novos.length + " presente(s) do arquivo \"" + arq.name + "\"? Eles aparecem no site na hora.";
+    if (ruins) texto += "\n" + ruins + " linha(s) sem nome ou sem valor serão ignoradas.";
+    texto += "\n\nPrimeiro: " + novos[0].nome + " · " + moeda(novos[0].valor) + (novos[0].cotas > 1 ? " × " + novos[0].cotas + " cotas" : "");
+    if (!confirm(texto)) return;
+    carregando("Importando " + novos.length + "...");
+    var r = await sb.from("presentes").insert(novos);
+    carregando("");
+    if (r.error) { alert("Não foi possível importar: " + msgErro(r.error)); return; }
+    await carregarPresentes();
+    alert(novos.length + " presente(s) importado(s).");
+  });
+
+  /* quem presenteou */
+  function desenharRecebidos() {
+    var alvo = $("#r-lista"); alvo.textContent = "";
+    if (!estado.presOk) return;
+    var n = estado.recebidos.length;
+    $("#r-contador").textContent = n + (n === 1 ? " presente recebido" : " presentes recebidos");
+    if (!n) { alvo.appendChild(h("div", { class: "vazio", text: "Ainda ninguém avisou que deu presente." })); return; }
+    var forma = { pix: "Pix", casar: "casar.com", outro: "Outro" };
+    estado.recebidos.forEach(function (r) {
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" },
+          h("div", { class: "nome", text: r.nome }),
+          h("span", { class: "selo " + (r.confirmado ? "sim" : "espera"), text: r.confirmado ? "Conferido" : "Conferir" })),
+        h("div", { class: "det" },
+          h("span", { text: r.presente_nome || "Presente" }),
+          r.cotas > 1 ? h("span", { text: r.cotas + " cotas" }) : null,
+          h("strong", { text: moeda(r.valor) })),
+        r.mensagem ? h("div", { class: "msg", text: r.mensagem }) : null,
+        h("div", { class: "pe empilha" },
+          h("span", { text: dataBR(r.criado_em) + " · " + (forma[r.forma] || r.forma) + (r.origem === "site" ? ", avisado pelo site" : "") }),
+          h("div", { class: "botoes-item" },
+            h("button", { class: "btn peq", type: "button", text: r.confirmado ? "Desmarcar" : "Marcar como conferido",
+                          onclick: function () { conferirRecebido(r, this); } }),
+            botaoApagar("Apagar", function () { apagarRecebido(r, this); })))
+      ));
+    });
+  }
+  async function conferirRecebido(r, btn) {
+    ocupado(btn, "Salvando...");
+    var x = await sb.from("presentes_recebidos").update({ confirmado: !r.confirmado }).eq("id", r.id).select().single();
+    if (x.error) { ocupado(btn); alert(msgErro(x.error)); return; }
+    estado.recebidos = estado.recebidos.map(function (y) { return y.id === r.id ? x.data : y; });
+    desenharPresentes();
+  }
+  async function apagarRecebido(r, btn) {
+    if (!confirm("Apagar o aviso de presente de \"" + r.nome + "\"? Use isso se o dinheiro não entrou ou se o aviso estiver repetido.")) return;
+    ocupado(btn, "Apagando...");
+    var x = await sb.from("presentes_recebidos").delete().eq("id", r.id).select("id");
+    if (x.error || !x.data || !x.data.length) { ocupado(btn); alert(x.error ? msgErro(x.error) : "Não foi possível apagar."); return; }
+    await carregarPresentes();
+  }
+  var fReceb = $("#f-recebido");
+  function preencherSelectPresentes() {
+    var sel = fReceb.elements.presente_id, atual = sel.value;
+    sel.textContent = "";
+    sel.appendChild(h("option", { value: "", text: "Outro (escrever)" }));
+    estado.presentes.forEach(function (p) { sel.appendChild(h("option", { value: p.id, text: p.nome + " · " + moeda(p.valor) + (p.cotas > 1 ? " a cota" : "") })); });
+    sel.value = estado.presentes.some(function (p) { return p.id === atual; }) ? atual : "";
+    ajustarReceb();
+  }
+  function ajustarReceb(recalcular) {
+    var f = fReceb.elements, p = estado.presentes.filter(function (x) { return x.id === f.presente_id.value; })[0];
+    $("[data-outro]", fReceb).hidden = !!p;
+    if (p && recalcular) f.valor.value = valorCampo(p.valor * inteiro(f.cotas.value, 1, 100, 1));
+  }
+  fReceb.elements.presente_id.addEventListener("change", function () { ajustarReceb(true); });
+  fReceb.elements.cotas.addEventListener("input", function () { ajustarReceb(true); });
+  $("#r-novo").addEventListener("click", function () {
+    if (!fReceb.hidden) { fecharForm(fReceb); return; }
+    fecharForm(fReceb); preencherSelectPresentes(); abrirForm(fReceb);
+  });
+  fReceb.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fReceb.elements, btn = $("button[type=submit]", fReceb);
+    var pid = f.presente_id.value || null, nome = nomeLimpo(f.nome.value), qual = nomeLimpo(f.presente_nome.value), valor = lerValor(f.valor.value);
+    if (!pid && qual.length < 2) { aviso(fReceb, "erro", "Escolha o presente da lista ou escreva qual foi."); f.presente_nome.focus(); return; }
+    if (nome.length < 2) { aviso(fReceb, "erro", "Informe quem deu o presente."); f.nome.focus(); return; }
+    if (!(valor >= 0) && !pid) { aviso(fReceb, "erro", "Informe o valor em reais, ex.: 200,00."); f.valor.focus(); return; }
+    var linha = {
+      presente_id: pid, presente_nome: pid ? "" : qual.slice(0, 120), nome: nome.slice(0, 120),
+      cotas: inteiro(f.cotas.value, 1, 100, 1), valor: valor >= 0 ? valor : null, forma: f.forma.value,
+      origem: f.forma.value === "casar" ? "casar" : "manual", mensagem: f.mensagem.value.trim().slice(0, 1000) || null,
+      confirmado: f.confirmado.checked
+    };
+    ocupado(btn, "Salvando...");
+    var r = await sb.from("presentes_recebidos").insert(linha).select().single();
+    ocupado(btn);
+    if (r.error) { aviso(fReceb, "erro", msgErro(r.error)); return; }
+    fecharForm(fReceb);
+    await carregarPresentes();
+  });
+  $("#r-exportar").addEventListener("click", function () {
+    var linhas = [["Quem deu", "Presente", "Cotas", "Valor", "Forma", "Conferido", "Mensagem", "Data"]];
+    estado.recebidos.forEach(function (r) {
+      linhas.push([r.nome, r.presente_nome, r.cotas, valorCampo(+r.valor), r.forma, r.confirmado ? "Sim" : "Não", r.mensagem, dataBR(r.criado_em)]);
+    });
+    baixarCSV("presentes-recebidos-ana-e-matheus", linhas);
+  });
+
+  /* ================= recados ================= */
   async function carregarRecados() {
-    var r = await sb.from("recados").select("*").order("criado_em", { ascending: false }).limit(5000);
+    var r = await sb.from("recados").select("id,nome,mensagem,criado_em,origem,publicado").order("criado_em", { ascending: false }).limit(5000);
+    estado.muralOk = !semTabela(r.error);
+    if (!estado.muralOk) r = await sb.from("recados").select("*").order("criado_em", { ascending: false }).limit(5000);
+    faixaBanco("recados", !estado.muralOk);
     if (r.error) { $("#contador-recados").textContent = msgErro(r.error); return; }
     estado.recados = r.data || [];
     desenharRecados();
@@ -821,18 +1624,46 @@
   function desenharRecados() {
     var alvo = $("#lista-recados");
     alvo.textContent = "";
-    $("#contador-recados").textContent = estado.recados.length + (estado.recados.length === 1 ? " recado" : " recados");
-    if (!estado.recados.length) { alvo.appendChild(h("div", { class: "vazio", text: "Ainda não há recados." })); return; }
-    estado.recados.forEach(function (rc) {
+    var lista = estado.recados.filter(function (rc) {
+      return estado.rcFiltro === "todos" || (estado.rcFiltro === "mural") === !!rc.publicado;
+    });
+    var noMural = estado.recados.filter(function (rc) { return rc.publicado; }).length, tot = estado.recados.length;
+    $("#contador-recados").textContent = tot + (tot === 1 ? " recado" : " recados") + (estado.muralOk ? " · " + noMural + " no mural do site" : "");
+    var todos = $("#rc-todos");
+    todos.textContent = tot && noMural === tot ? "Tirar todos do mural" : "Mostrar todos no mural";
+    if (estado.muralOk) todos.disabled = !tot;
+    if (!lista.length) { alvo.appendChild(h("div", { class: "vazio", text: tot ? "Nenhum recado com esse filtro." : "Ainda não há recados." })); return; }
+    var origem = { site: "pelo site", casar: "casar.com", manual: "adicionado no painel" };
+    lista.forEach(function (rc) {
       alvo.appendChild(h("article", { class: "item" },
-        h("div", { class: "cab" }, h("div", { class: "nome", text: rc.nome })),
+        h("div", { class: "cab" }, h("div", { class: "nome", text: rc.nome }), rc.publicado ? h("span", { class: "selo mural", text: "No mural" }) : null),
         h("div", { class: "msg", text: rc.mensagem }),
-        h("div", { class: "pe" },
-          h("span", { text: dataBR(rc.criado_em) }),
-          h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarRecado(rc, this); } }))
+        h("div", { class: "pe empilha" },
+          h("span", { text: dataBR(rc.criado_em) + (rc.origem ? " · " + (origem[rc.origem] || rc.origem) : "") }),
+          h("div", { class: "botoes-item" },
+            estado.muralOk ? h("button", { class: "btn peq", type: "button", text: rc.publicado ? "Tirar do mural" : "Mostrar no mural",
+                                          onclick: function () { muralRecado(rc, this); } }) : null,
+            botaoApagar("Apagar", function () { apagarRecado(rc, this); })))
       ));
     });
   }
+  seg($("#rc-filtro"), function (f) { estado.rcFiltro = f; desenharRecados(); });
+  async function muralRecado(rc, btn) {
+    ocupado(btn, "Salvando...");
+    var r = await sb.from("recados").update({ publicado: !rc.publicado }).eq("id", rc.id).select("id,nome,mensagem,criado_em,origem,publicado").single();
+    if (r.error) { ocupado(btn); alert(msgErro(r.error)); return; }
+    estado.recados = estado.recados.map(function (x) { return x.id === rc.id ? r.data : x; });
+    desenharRecados();
+  }
+  $("#rc-todos").addEventListener("click", async function () {
+    var tot = estado.recados.length, pub = estado.recados.filter(function (x) { return x.publicado; }).length, novo = !(tot && pub === tot);
+    if (!confirm(novo ? "Mostrar todos os " + tot + " recados no mural do site?" : "Tirar todos os recados do mural do site?")) return;
+    ocupado(this, "Salvando...");
+    var r = await sb.from("recados").update({ publicado: novo }).eq("publicado", !novo).select("id");
+    ocupado(this);
+    if (r.error) { alert(msgErro(r.error)); return; }
+    await carregarRecados();
+  });
   async function apagarRecado(rc, btn) {
     if (!confirm("Apagar o recado de \"" + rc.nome + "\"? Isso não pode ser desfeito.")) return;
     ocupado(btn, "Apagando...");
@@ -841,6 +1672,54 @@
     estado.recados = estado.recados.filter(function (x) { return x.id !== rc.id; });
     desenharRecados();
   }
+  var fRec = $("#f-recado");
+  $("#rc-novo").addEventListener("click", function () {
+    if (!fRec.hidden) { fecharForm(fRec); return; }
+    fecharForm(fRec); abrirForm(fRec);
+  });
+  fRec.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fRec.elements, btn = $("button[type=submit]", fRec);
+    var nome = nomeLimpo(f.nome.value), msg = f.mensagem.value.trim();
+    if (nome.length < 2) { aviso(fRec, "erro", "Informe o nome de quem mandou."); f.nome.focus(); return; }
+    if (msg.length < 2) { aviso(fRec, "erro", "Escreva o recado."); f.mensagem.focus(); return; }
+    var linha = { nome: nome.slice(0, 120), mensagem: msg.slice(0, 1000), origem: f.origem.value, publicado: f.publicado.checked };
+    if (f.data.value) linha.criado_em = f.data.value + "T12:00:00-03:00";
+    ocupado(btn, "Salvando...");
+    var r = await sb.from("recados").insert(linha).select("id,nome,mensagem,criado_em,origem,publicado").single();
+    ocupado(btn);
+    if (r.error) { aviso(fRec, "erro", msgErro(r.error)); return; }
+    fecharForm(fRec);
+    await carregarRecados();
+  });
+  $("#rc-importar").addEventListener("click", function () { $("#rc-arquivo").click(); });
+  aoEscolherPlanilha($("#rc-arquivo"), async function (linhas, arq) {
+    var m = colunas(linhas, {
+      nome: /^(nome|de$|autor|convidado|remetente|name)/, mensagem: /^(mensagem|recado|texto|message|coment)/, data: /^(data|enviado|quando|date)/
+    }, { nome: 0, mensagem: 1, data: 2 });
+    var col = m.col, ja = {}, novos = [], repetidos = 0, ruins = 0;
+    estado.recados.forEach(function (rc) { ja[chaveNome(rc.nome) + "|" + chaveNome(rc.mensagem)] = true; });
+    m.dados.forEach(function (l) {
+      var nome = nomeLimpo(pegar(l, col.nome)).slice(0, 120), msg = pegar(l, col.mensagem).slice(0, 1000);
+      if (nome.length < 2 || msg.length < 2) { ruins++; return; }
+      var k = chaveNome(nome) + "|" + chaveNome(msg);
+      if (ja[k]) { repetidos++; return; }
+      ja[k] = true;
+      /* todas as linhas com data (envio em lote preenche o que falta com vazio) */
+      novos.push({ nome: nome, mensagem: msg, origem: "casar", publicado: false, criado_em: dataPlanilha(pegar(l, col.data)) || new Date().toISOString() });
+    });
+    if (!novos.length) { alert(repetidos ? "Todos os recados desse arquivo já estão aqui." : "Nenhum recado válido. A planilha precisa ter as colunas: nome; mensagem; data (opcional)."); return; }
+    var texto = "Importar " + novos.length + " recado(s) do arquivo \"" + arq.name + "\" como casar.com? Eles entram fora do mural; depois vocês escolhem quais mostrar no site.";
+    if (repetidos) texto += "\n" + repetidos + " já estão aqui e serão pulados.";
+    if (ruins) texto += "\n" + ruins + " linha(s) sem nome ou sem mensagem serão ignoradas.";
+    if (!confirm(texto)) return;
+    carregando("Importando " + novos.length + "...");
+    var r = await sb.from("recados").insert(novos);
+    carregando("");
+    if (r.error) { alert("Não foi possível importar: " + msgErro(r.error)); return; }
+    await carregarRecados();
+    alert(novos.length + " recado(s) importado(s).");
+  });
 
   /* fotos */
   async function carregarFotos() {
@@ -869,10 +1748,10 @@
   function paraBlob(canvas, tipo, q) {
     return new Promise(function (ok) { canvas.toBlob(function (b) { ok(b); }, tipo, q); });
   }
-  async function reduzir(arquivo) {
+  async function reduzir(arquivo, maxLado) {
     var r = await lerImagem(arquivo), img = r.img;
     var w = img.naturalWidth, hgt = img.naturalHeight;
-    var esc = Math.min(1, MAX_LADO / Math.max(w, hgt));
+    var esc = Math.min(1, (maxLado || MAX_LADO) / Math.max(w, hgt));
     var cw = Math.max(1, Math.round(w * esc)), ch = Math.max(1, Math.round(hgt * esc));
     var c = document.createElement("canvas"); c.width = cw; c.height = ch;
     var ctx = c.getContext("2d");
@@ -914,12 +1793,7 @@
       if (!pronto) return;
       ocupado(bSal, "Enviando..."); bCan.disabled = true;
       try {
-        var ext = pronto.blob.type === "image/webp" ? "webp" : "jpg";
-        var nome = k + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-        var up = await sb.storage.from("fotos").upload(nome, pronto.blob, { contentType: pronto.blob.type, cacheControl: "31536000", upsert: false });
-        if (up.error) throw up.error;
-        var pub = sb.storage.from("fotos").getPublicUrl(nome).data.publicUrl;
-        if (pub.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da foto.");
+        var pub = await enviarFoto(k, pronto.blob);
         await salvarFoto(k, pub);
         limparPrevia();
         aviso(card, "ok", "Foto salva! Ela já aparece no site (recarregue a página do site para ver).");
@@ -934,6 +1808,17 @@
       ocupado(bOri); desenharFotos();
     });
   });
+
+  /* envia a foto para o Storage (bucket fotos) e devolve o endereço público */
+  async function enviarFoto(prefixo, blob) {
+    var ext = blob.type === "image/webp" ? "webp" : "jpg";
+    var nome = prefixo + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+    var up = await sb.storage.from("fotos").upload(nome, blob, { contentType: blob.type, cacheControl: "31536000", upsert: false });
+    if (up.error) throw up.error;
+    var pub = sb.storage.from("fotos").getPublicUrl(nome).data.publicUrl;
+    if (pub.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da foto.");
+    return pub;
+  }
 
   async function salvarFoto(chave, url) {
     var atual = await sb.from("config").select("valor").eq("chave", "fotos").maybeSingle();
@@ -1011,7 +1896,7 @@
   $("#v-atualizar").addEventListener("click", carregarVisitas);
 
   /* Pix */
-  var fPix = $("#f-pix"), pixAtual = null, pixPayload = "";
+  var fPix = $("#f-pix"), pixAtual = null, pixPayload = "", pixLido = false;
   function previaPix() {
     var f = fPix.elements;
     var dados = { chave: f.chave.value, nome: f.nome.value, cidade: f.cidade.value, mensagem: f.mensagem.value };
@@ -1035,6 +1920,7 @@
     var r = await sb.from("config").select("valor").eq("chave", "pix").maybeSingle();
     if (r.error) { aviso(fPix, "erro", msgErro(r.error)); return; }
     pixAtual = r.data ? (r.data.valor || {}) : null;
+    pixLido = true; avisoSemPix();
     var v = pixAtual || {}, f = fPix.elements;
     f.chave.value = v.chave || ""; f.nome.value = v.nome || ""; f.cidade.value = v.cidade || "PALMAS"; f.mensagem.value = v.mensagem || "";
     $("#pix-remover").hidden = !(pixAtual && pixAtual.chave);
@@ -1049,6 +1935,7 @@
     if (!r.data || !r.data.length) throw new Error("sem permissão para alterar o Pix.");
     pixAtual = valor;
     $("#pix-remover").hidden = !valor.chave;
+    avisoSemPix();
   }
   fPix.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -1094,8 +1981,8 @@
   });
   $("#sair").addEventListener("click", async function () {
     await sb.auth.signOut();
-    estado.logado = false; estado.presencas = []; estado.recados = [];
-    $("#lista-presencas").textContent = ""; $("#lista-recados").textContent = "";
+    estado.logado = false; estado.presencas = []; estado.recados = []; estado.convidados = []; estado.presentes = []; estado.recebidos = [];
+    ["#lista-presencas", "#lista-recados", "#c-lista", "#p-lista", "#r-lista"].forEach(function (s) { $(s).textContent = ""; });
     mostrarEntrada("login");
   });
 
