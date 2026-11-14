@@ -129,6 +129,12 @@
   .foto .corpo p{margin:0; font-size:14px; color:var(--soft)}
 
   .conta{display:grid; gap:16px; max-width:460px}
+  .textos{display:grid; gap:2px; max-width:680px}
+  .selo.oculto{background:var(--bg2); color:var(--soft)}
+  .item .thumb{width:72px; height:54px; flex:none; border-radius:8px; object-fit:cover; background:var(--bg2)}
+  .item .valor{font-weight:700; font-size:15px; color:var(--ink)}
+  .cota-img{display:grid; gap:8px}
+  .cota-img img{width:100%; max-width:320px; aspect-ratio:4 / 3; object-fit:cover; border-radius:10px; background:var(--bg2)}
 
   .cartao-claro{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:12px}
   .cartao-claro h3 small{font-weight:500; color:var(--soft)}
@@ -161,7 +167,7 @@
     .ferramentas{grid-template-columns:1fr auto}
     .fotos{grid-template-columns:1fr 1fr}
     .pix-grade{grid-template-columns:1.2fr 1fr; align-items:start}
-    .lista.recados{grid-template-columns:1fr 1fr}
+    .lista.recados, .lista.cotas{grid-template-columns:1fr 1fr}
   }
 </style>
 </head>
@@ -208,9 +214,11 @@
     <nav class="abas" role="tablist">
       <button role="tab" data-aba="presencas" aria-selected="true">Presenças</button>
       <button role="tab" data-aba="recados" aria-selected="false">Recados</button>
+      <button role="tab" data-aba="presentes" aria-selected="false">Presentes</button>
       <button role="tab" data-aba="visitas" aria-selected="false">Visitas</button>
       <button role="tab" data-aba="pix" aria-selected="false">Pix</button>
       <button role="tab" data-aba="fotos" aria-selected="false">Fotos</button>
+      <button role="tab" data-aba="site" aria-selected="false">Textos</button>
       <button role="tab" data-aba="conta" aria-selected="false">Conta</button>
     </nav>
   </header>
@@ -226,7 +234,7 @@
       </div>
 
       <div class="ferramentas">
-        <input class="busca" id="busca" type="search" placeholder="Buscar por nome" autocomplete="off">
+        <input class="busca" id="busca" type="search" placeholder="Buscar por nome, e-mail ou telefone" autocomplete="off">
         <div class="linha">
           <div class="seg" id="filtro" role="group" aria-label="Filtro">
             <button type="button" data-f="todos" aria-pressed="true">Todos</button>
@@ -262,6 +270,7 @@
           <label>Crianças<input name="criancas" type="number" inputmode="numeric" min="0" max="20" value="0"></label>
         </div>
         <label>Telefone (opcional)<input name="telefone" type="tel" maxlength="30"></label>
+        <label>E-mail (opcional)<input name="email" type="email" maxlength="120" autocapitalize="none" spellcheck="false"></label>
         <label>Observação (opcional)<textarea name="mensagem" maxlength="500"></textarea></label>
         <p class="aviso" role="alert" hidden></p>
         <div class="linha">
@@ -276,8 +285,49 @@
 
     <section id="aba-recados" hidden>
       <h2>Recados</h2>
+      <p class="nota" style="margin-bottom:12px">Recado novo chega oculto. Toque em "Mostrar no mural" para ele aparecer no site (só o nome, a mensagem e a data). "Ocultar" tira do mural sem apagar.</p>
       <p class="contador" id="contador-recados"></p>
       <div class="lista recados" id="lista-recados"></div>
+    </section>
+
+    <section id="aba-presentes" hidden>
+      <h2>Presentes por cotas</h2>
+      <p class="nota" style="margin-bottom:8px">Cada cota vira um card na Lista de presentes do site. Ao tocar, o convidado vê o Pix com o valor da cota já preenchido e o botão de copiar.</p>
+      <p class="nota" id="cotas-pix-estado" style="margin-bottom:14px"></p>
+      <div class="acoes">
+        <button class="btn cheio peq" type="button" id="abrir-cota">+ Nova cota</button>
+        <button class="btn peq" type="button" id="atualizar-cotas">Atualizar</button>
+      </div>
+      <form class="painel-form" id="f-cota" novalidate hidden>
+        <h3 id="f-cota-titulo">Nova cota</h3>
+        <label>Nome<input name="nome" maxlength="80" required placeholder="Ex.: Jantar na lua de mel"></label>
+        <div class="dupla">
+          <label>Valor (R$)<input name="valor" inputmode="decimal" maxlength="12" placeholder="150,00"></label>
+          <label>Ordem no site<input name="ordem" type="number" inputmode="numeric" min="0" max="999" value="0"></label>
+        </div>
+        <label>Descrição curta (opcional)<textarea name="descricao" maxlength="200" placeholder="Até 200 caracteres"></textarea></label>
+        <div class="cota-img">
+          <img id="cota-previa" alt="Imagem da cota" hidden>
+          <p class="nota" id="cota-img-estado">Sem imagem (opcional).</p>
+          <div class="linha">
+            <button class="btn peq" type="button" id="cota-escolher">Escolher imagem</button>
+            <button class="btn perigo peq" type="button" id="cota-tirar-img" hidden>Tirar imagem</button>
+          </div>
+          <input type="file" id="cota-arquivo" accept="image/*" hidden>
+        </div>
+        <p class="aviso" role="alert" hidden></p>
+        <div class="linha">
+          <button class="btn cheio" type="submit">Salvar cota</button>
+          <button class="btn" type="button" id="cancelar-cota">Cancelar</button>
+        </div>
+      </form>
+      <p class="contador" id="contador-cotas"></p>
+      <div class="lista cotas" id="lista-cotas"></div>
+
+      <h2 style="margin-top:30px">Intenções de presente</h2>
+      <p class="nota" style="margin-bottom:12px">Quem escolheu uma cota no site e deixou o nome. <b>Isso não confirma pagamento</b>: confira o Pix no extrato do banco.</p>
+      <p class="contador" id="contador-intencoes"></p>
+      <div class="lista" id="lista-intencoes"></div>
     </section>
 
     <section id="aba-visitas" hidden>
@@ -305,7 +355,7 @@
 
     <section id="aba-pix" hidden>
       <h2>Pix para presentes</h2>
-      <p class="nota" style="margin-bottom:14px">Com a chave cadastrada, o site mostra na Lista de presentes um QR code do Pix e o botão de copia e cola. O convidado escolhe o valor no app do banco. Sem chave, essa parte não aparece no site.</p>
+      <p class="nota" style="margin-bottom:14px">Com a chave cadastrada, o site mostra na Lista de presentes um QR code do Pix (o convidado escolhe o valor) e libera as cotas da aba Presentes, cada uma com o valor já preenchido. Sem chave, o QR não aparece e as cotas ficam como "em breve".</p>
       <div class="pix-grade">
         <form class="painel-form" id="f-pix" novalidate>
           <label>Chave Pix<input name="chave" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" maxlength="77" placeholder="CPF, CNPJ, e-mail, +55 telefone ou aleatória"></label>
@@ -364,6 +414,38 @@
       <p style="margin-top:16px"><a href="https://lgrsv.github.io/ana-e-matheus-2027/" target="_blank" rel="noopener">Ver o site</a></p>
     </section>
 
+    <section id="aba-site" hidden>
+      <h2>Textos e limites do site</h2>
+      <div class="textos">
+        <form class="painel-form" id="f-limites" novalidate>
+          <h3>Confirmação de presença</h3>
+          <p class="nota">Quantas pessoas cada confirmação pode informar no site. Aqui no painel você pode lançar qualquer número (até 20).</p>
+          <div class="dupla">
+            <label>Máximo de adultos<input name="max_adultos" type="number" inputmode="numeric" min="1" max="20" value="10"></label>
+            <label>Máximo de crianças<input name="max_criancas" type="number" inputmode="numeric" min="0" max="20" value="10"></label>
+          </div>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha"><button class="btn cheio" type="submit">Salvar limites</button></div>
+        </form>
+        <form class="painel-form" id="f-casal" novalidate>
+          <h3>Seção "O casal"</h3>
+          <p class="nota">Só aparece no site (com item no menu) quando tem texto. Deixe em branco para esconder. Uma linha em branco separa parágrafos.</p>
+          <label>Texto<textarea name="texto" maxlength="4000" rows="7"></textarea></label>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha"><button class="btn cheio" type="submit">Salvar "O casal"</button></div>
+        </form>
+        <form class="painel-form" id="f-padrinhos" novalidate>
+          <h3>Seção "Padrinhos"</h3>
+          <p class="nota">Aparece no site quando tem texto ou nomes. Deixe tudo em branco para esconder.</p>
+          <label>Texto (opcional)<textarea name="texto" maxlength="4000" rows="3"></textarea></label>
+          <label>Nomes (um por linha)<textarea name="nomes" rows="8" maxlength="6000" placeholder="Ex.: Carlos e Fernanda"></textarea></label>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha"><button class="btn cheio" type="submit">Salvar "Padrinhos"</button></div>
+        </form>
+      </div>
+      <p style="margin-top:6px"><a href="https://lgrsv.github.io/ana-e-matheus-2027/" target="_blank" rel="noopener">Ver o site</a></p>
+    </section>
+
     <section id="aba-conta" hidden>
       <h2>Conta</h2>
       <div class="conta">
@@ -393,7 +475,7 @@
   var FOTOS_PUB = SB_URL + "/storage/v1/object/public/fotos/";
   var MAX_LADO = 1600;
 
-  /* Pix estático (BR Code EMV) */
+  /* Pix estático (BR Code EMV); valor opcional vai no campo 54 */
   var Pix = (function () {
     function semAcento(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, ""); }
     function limpo(s, max) { return semAcento(s).replace(/[^A-Za-z0-9 .,\-]/g, "").replace(/\s+/g, " ").trim().slice(0, max).trim(); }
@@ -442,19 +524,22 @@
       }
       return ("000" + crc.toString(16).toUpperCase()).slice(-4);
     }
-    /* dados = {chave, nome, cidade, mensagem}; devolve {payload, nome, cidade, tipo} ou {erro} */
+    /* dados = {chave, nome, cidade, mensagem, valor?}; devolve {payload, nome, cidade, tipo, valor} ou {erro} */
     function payload(dados) {
       var k = chave(dados && dados.chave);
       if (k.erro) return k;
       var nome = limpo(dados.nome, 25), cidade = limpo(dados.cidade || "PALMAS", 15).toUpperCase();
       if (nome.length < 2) return { erro: "Informe o nome do recebedor." };
       if (!cidade) return { erro: "Informe a cidade." };
+      var valor = dados.valor == null || dados.valor === "" ? 0 : Math.round(Number(dados.valor) * 100) / 100;
+      if (isNaN(valor) || valor < 0 || valor > 999999.99) return { erro: "Valor inválido." };
       var conta = campo("00", "br.gov.bcb.pix") + campo("01", k.chave);
       var msg = limpo(dados.mensagem, 99 - conta.length - 4);
       if (msg) conta += campo("02", msg);
-      var p = campo("00", "01") + campo("26", conta) + campo("52", "0000") + campo("53", "986") + campo("58", "BR") +
+      var p = campo("00", "01") + campo("26", conta) + campo("52", "0000") + campo("53", "986") +
+              (valor > 0 ? campo("54", valor.toFixed(2)) : "") + campo("58", "BR") +
               campo("59", nome) + campo("60", cidade) + campo("62", campo("05", "***")) + "6304";
-      return { payload: p + crc16(p), nome: nome, cidade: cidade, tipo: k.tipo, chave: k.chave };
+      return { payload: p + crc16(p), nome: nome, cidade: cidade, tipo: k.tipo, chave: k.chave, valor: valor };
     }
     return { chave: chave, payload: payload, crc16: crc16 };
   })();
@@ -496,6 +581,24 @@
   var fmtData = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Araguaina" });
   function dataBR(iso) { try { return fmtData.format(new Date(iso)).replace(",", " às"); } catch (e) { return iso || ""; } }
   function inteiro(v, min, max, padrao) { var n = parseInt(v, 10); if (isNaN(n)) n = padrao; return Math.min(max, Math.max(min, n)); }
+  function emailOk(s) { return s.length <= 120 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
+  var moedaFmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+  function moeda(v) { return moedaFmt.format(Number(v) || 0); }
+  /* config genérica: lê e grava uma chave (update; se não existir, insert) */
+  async function lerConfig(chave) {
+    var r = await sb.from("config").select("valor").eq("chave", chave).maybeSingle();
+    if (r.error) throw r.error;
+    return r.data ? r.data.valor : null;
+  }
+  async function gravarConfig(chave, valor) {
+    var r = await sb.from("config").update({ valor: valor, atualizado_em: new Date().toISOString() }).eq("chave", chave).select("chave");
+    if (r.error) throw r.error;
+    if (!r.data || !r.data.length) {
+      r = await sb.from("config").insert({ chave: chave, valor: valor }).select("chave");
+      if (r.error) throw r.error;
+      if (!r.data || !r.data.length) throw new Error("sem permissão para alterar o site.");
+    }
+  }
   function semAcento(s) { return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase(); }
   function ocupado(btn, txt) {
     if (txt) { btn.dataset.txt = btn.textContent; btn.textContent = txt; btn.disabled = true; }
@@ -598,7 +701,7 @@
   $$(".abas button").forEach(function (b) {
     b.addEventListener("click", function () {
       $$(".abas button").forEach(function (x) { x.setAttribute("aria-selected", x === b ? "true" : "false"); });
-      ["presencas", "recados", "visitas", "pix", "fotos", "conta"].forEach(function (a) { $("#aba-" + a).hidden = a !== b.dataset.aba; });
+      ["presencas", "recados", "presentes", "visitas", "pix", "fotos", "site", "conta"].forEach(function (a) { $("#aba-" + a).hidden = a !== b.dataset.aba; });
       window.scrollTo(0, 0);
     });
   });
@@ -606,7 +709,7 @@
   /* dados */
   async function carregarTudo() {
     carregando("Carregando...");
-    try { await Promise.all([carregarPresencas(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix()]); }
+    try { await Promise.all([carregarPresencas(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix(), carregarCotas(), carregarIntencoes(), carregarTextos()]); }
     finally { carregando(""); }
   }
 
@@ -629,7 +732,7 @@
     var lista = estado.presencas.filter(function (p) {
       if (estado.filtro === "vao" && !p.vai) return false;
       if (estado.filtro === "naovao" && p.vai) return false;
-      return !termo || semAcento(p.nome).indexOf(termo) >= 0;
+      return !termo || semAcento([p.nome, p.email, p.telefone].join(" ")).indexOf(termo) >= 0;
     });
     lista.sort(function (a, b) {
       if (estado.ordem === "nome") return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR");
@@ -649,14 +752,15 @@
     var origens = { site: "pelo site", casar: "importado do casar.com", manual: "adicionado no painel" };
     lista.forEach(function (p) {
       var tel = p.telefone ? h("a", { href: "tel:" + p.telefone.replace(/[^\d+]/g, ""), text: p.telefone }) : null;
+      var mail = p.email ? h("a", { href: "mailto:" + p.email, text: p.email }) : null;
       alvo.appendChild(h("article", { class: "item" },
         h("div", { class: "cab" },
           h("div", { class: "nome", text: p.nome }),
           h("span", { class: "selo " + (p.vai ? "sim" : "nao"), text: p.vai ? "Vai" : "Não vai" })),
         p.vai ? h("div", { class: "det" },
           h("span", { text: p.adultos + (p.adultos === 1 ? " adulto" : " adultos") }),
-          h("span", { text: p.criancas + (p.criancas === 1 ? " criança" : " crianças") }), tel)
-          : (tel ? h("div", { class: "det" }, tel) : null),
+          h("span", { text: p.criancas + (p.criancas === 1 ? " criança" : " crianças") }), tel, mail)
+          : (tel || mail ? h("div", { class: "det" }, tel, mail) : null),
         p.mensagem ? h("div", { class: "msg", text: p.mensagem }) : null,
         h("div", { class: "pe" },
           h("span", { text: dataBR(p.criado_em) + " · " + (origens[p.origem] || p.origem) }),
@@ -697,12 +801,15 @@
     var f = fNovo.elements, btn = $("button[type=submit]", fNovo);
     var nome = f.nome.value.trim().replace(/\s+/g, " ");
     if (nome.length < 2) { aviso(fNovo, "erro", "Informe o nome."); return; }
+    var email = f.email.value.trim().toLowerCase();
+    if (email && !emailOk(email)) { aviso(fNovo, "erro", "E-mail inválido (ou deixe em branco)."); return; }
     var vai = $("input[name=vai]:checked", fNovo).value === "sim";
     var linha = {
       nome: nome.slice(0, 120), vai: vai,
       adultos: vai ? inteiro(f.adultos.value, 0, 20, 1) : 0,
       criancas: vai ? inteiro(f.criancas.value, 0, 20, 0) : 0,
       telefone: f.telefone.value.trim().slice(0, 30) || null,
+      email: email || null,
       mensagem: f.mensagem.value.trim().slice(0, 500) || null,
       origem: "manual"
     };
@@ -722,10 +829,10 @@
     return /[;"\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
   $("#exportar").addEventListener("click", function () {
-    var linhas = [["Nome", "Vai", "Adultos", "Crianças", "Telefone", "Mensagem", "Origem", "Data"]];
+    var linhas = [["Nome", "Vai", "Adultos", "Crianças", "Telefone", "E-mail", "Mensagem", "Origem", "Data"]];
     estado.presencas.slice().sort(function (a, b) { return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR"); })
       .forEach(function (p) {
-        linhas.push([p.nome, p.vai ? "Sim" : "Não", p.adultos, p.criancas, p.telefone, p.mensagem, p.origem, dataBR(p.criado_em)]);
+        linhas.push([p.nome, p.vai ? "Sim" : "Não", p.adultos, p.criancas, p.telefone, p.email, p.mensagem, p.origem, dataBR(p.criado_em)]);
       });
     var csv = "﻿" + linhas.map(function (l) { return l.map(celula).join(";"); }).join("\r\n") + "\r\n";
     var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -777,7 +884,9 @@
         nome: cab.indexOf("nome"),
         vai: cab.findIndex(function (x) { return /^(vai|presenca|confirmado|status)/.test(x); }),
         adultos: cab.findIndex(function (x) { return /^adulto/.test(x); }),
-        criancas: cab.findIndex(function (x) { return /^crianca/.test(x); })
+        criancas: cab.findIndex(function (x) { return /^crianca/.test(x); }),
+        email: cab.findIndex(function (x) { return /^e-?mail/.test(x); }),
+        telefone: cab.findIndex(function (x) { return /^(telefone|celular|fone|whats)/.test(x); })
       };
       linhas = linhas.slice(1);
     }
@@ -787,10 +896,14 @@
       if (nome.length < 2) { ignorados++; return; }
       var vai = col.vai >= 0 ? simNao(l[col.vai]) : true;
       if (vai === null) vai = true;
+      var em = col.email >= 0 ? String(l[col.email] || "").trim().toLowerCase() : "";
+      var tl = col.telefone >= 0 ? String(l[col.telefone] || "").trim().slice(0, 30) : "";
       novos.push({
         nome: nome.slice(0, 120), vai: vai,
         adultos: vai ? inteiro(col.adultos >= 0 ? l[col.adultos] : "", 0, 20, 1) : 0,
         criancas: vai ? inteiro(col.criancas >= 0 ? l[col.criancas] : "", 0, 20, 0) : 0,
+        email: em && emailOk(em) ? em : null,
+        telefone: tl || null,
         origem: "casar"
       });
     });
@@ -821,17 +934,29 @@
   function desenharRecados() {
     var alvo = $("#lista-recados");
     alvo.textContent = "";
-    $("#contador-recados").textContent = estado.recados.length + (estado.recados.length === 1 ? " recado" : " recados");
+    var noMural = estado.recados.filter(function (x) { return x.aprovado; }).length;
+    $("#contador-recados").textContent = estado.recados.length + (estado.recados.length === 1 ? " recado" : " recados") +
+      (estado.recados.length ? " · " + noMural + " no mural · " + (estado.recados.length - noMural) + " oculto(s)" : "");
     if (!estado.recados.length) { alvo.appendChild(h("div", { class: "vazio", text: "Ainda não há recados." })); return; }
     estado.recados.forEach(function (rc) {
       alvo.appendChild(h("article", { class: "item" },
-        h("div", { class: "cab" }, h("div", { class: "nome", text: rc.nome })),
+        h("div", { class: "cab" }, h("div", { class: "nome", text: rc.nome }),
+          h("span", { class: "selo " + (rc.aprovado ? "sim" : "oculto"), text: rc.aprovado ? "No mural" : "Oculto" })),
         h("div", { class: "msg", text: rc.mensagem }),
         h("div", { class: "pe" },
           h("span", { text: dataBR(rc.criado_em) }),
+          h("button", { class: "btn peq" + (rc.aprovado ? "" : " cheio"), type: "button", "data-moderar": rc.id,
+                        text: rc.aprovado ? "Ocultar" : "Mostrar no mural", onclick: function () { moderarRecado(rc, this); } }),
           h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarRecado(rc, this); } }))
       ));
     });
+  }
+  async function moderarRecado(rc, btn) {
+    ocupado(btn, "Salvando...");
+    var r = await sb.from("recados").update({ aprovado: !rc.aprovado }).eq("id", rc.id).select("id,aprovado");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível alterar."); return; }
+    rc.aprovado = r.data[0].aprovado;
+    desenharRecados();
   }
   async function apagarRecado(rc, btn) {
     if (!confirm("Apagar o recado de \"" + rc.nome + "\"? Isso não pode ser desfeito.")) return;
@@ -869,10 +994,10 @@
   function paraBlob(canvas, tipo, q) {
     return new Promise(function (ok) { canvas.toBlob(function (b) { ok(b); }, tipo, q); });
   }
-  async function reduzir(arquivo) {
+  async function reduzir(arquivo, maxLado) {
     var r = await lerImagem(arquivo), img = r.img;
     var w = img.naturalWidth, hgt = img.naturalHeight;
-    var esc = Math.min(1, MAX_LADO / Math.max(w, hgt));
+    var esc = Math.min(1, (maxLado || MAX_LADO) / Math.max(w, hgt));
     var cw = Math.max(1, Math.round(w * esc)), ch = Math.max(1, Math.round(hgt * esc));
     var c = document.createElement("canvas"); c.width = cw; c.height = ch;
     var ctx = c.getContext("2d");
@@ -1038,7 +1163,7 @@
     var v = pixAtual || {}, f = fPix.elements;
     f.chave.value = v.chave || ""; f.nome.value = v.nome || ""; f.cidade.value = v.cidade || "PALMAS"; f.mensagem.value = v.mensagem || "";
     $("#pix-remover").hidden = !(pixAtual && pixAtual.chave);
-    previaPix();
+    previaPix(); estadoPixCotas();
   }
   fPix.addEventListener("input", previaPix);
   async function gravarPix(valor) {
@@ -1049,6 +1174,7 @@
     if (!r.data || !r.data.length) throw new Error("sem permissão para alterar o Pix.");
     pixAtual = valor;
     $("#pix-remover").hidden = !valor.chave;
+    estadoPixCotas();
   }
   fPix.addEventListener("submit", async function (e) {
     e.preventDefault();
@@ -1079,6 +1205,199 @@
     if (navigator.clipboard) navigator.clipboard.writeText(pixPayload).then(ok, function () { prompt("Copie o código:", pixPayload); });
     else prompt("Copie o código:", pixPayload);
   });
+
+  /* presentes por cotas */
+  estado.cotas = []; estado.intencoes = [];
+  var fCota = $("#f-cota"), cotaEditando = null, cotaImg = { url: null, blob: null, previa: null };
+  function nomeArquivo(url) { return url && url.indexOf(FOTOS_PUB) === 0 ? decodeURIComponent(url.slice(FOTOS_PUB.length)) : null; }
+  function lerValor(s) {
+    s = String(s || "").replace(/R\$|\s/g, "");
+    if (s.indexOf(",") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+    var n = Number(s);
+    return isNaN(n) ? NaN : Math.round(n * 100) / 100;
+  }
+  function estadoPixCotas() {
+    var ok = pixAtual && pixAtual.chave;
+    var p = $("#cotas-pix-estado");
+    p.textContent = ok ? "Pix cadastrado: as cotas aparecem no site prontas para presentear."
+                       : "Sem chave Pix cadastrada (aba Pix): as cotas aparecem no site como \"em breve\" e o link da lista do casar.com continua.";
+    p.style.color = ok ? "var(--ok)" : "var(--err)";
+  }
+  async function carregarCotas() {
+    var r = await sb.from("presentes").select("*").order("ordem", { ascending: true }).order("criado_em", { ascending: true });
+    if (r.error) { $("#contador-cotas").textContent = msgErro(r.error); return; }
+    estado.cotas = r.data || [];
+    desenharCotas();
+  }
+  function desenharCotas() {
+    estadoPixCotas();
+    var alvo = $("#lista-cotas"); alvo.textContent = "";
+    var n = estado.cotas.length;
+    $("#contador-cotas").textContent = n + (n === 1 ? " cota" : " cotas");
+    if (!n) { alvo.appendChild(h("div", { class: "vazio", text: "Nenhuma cota ainda. Toque em \"+ Nova cota\"." })); return; }
+    estado.cotas.forEach(function (c) {
+      var qtd = estado.intencoes.filter(function (i) { return i.presente_id === c.id; }).length;
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" },
+          c.imagem ? h("img", { class: "thumb", src: c.imagem, alt: "" }) : null,
+          h("div", { class: "nome" }, c.nome, h("div", { class: "valor", text: moeda(c.valor) }))),
+        c.descricao ? h("div", { class: "msg", text: c.descricao }) : null,
+        h("div", { class: "pe" },
+          h("span", { text: "Ordem " + c.ordem + (qtd ? " · " + qtd + (qtd === 1 ? " intenção" : " intenções") : "") }),
+          h("button", { class: "btn peq", type: "button", text: "Editar", onclick: function () { abrirFormCota(c); } }),
+          h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarCota(c, this); } }))
+      ));
+    });
+  }
+  function previaCota() {
+    var src = cotaImg.previa || cotaImg.url, img = $("#cota-previa");
+    if (src) { img.src = src; img.hidden = false; } else { img.hidden = true; img.removeAttribute("src"); }
+    $("#cota-img-estado").textContent = cotaImg.blob ? "Imagem nova: " + Math.round(cotaImg.blob.size / 1024) + " KB (enviada ao salvar)."
+      : (cotaImg.url ? "Imagem atual." : "Sem imagem (opcional).");
+    $("#cota-tirar-img").hidden = !src;
+  }
+  function limparImgCota() {
+    if (cotaImg.previa) URL.revokeObjectURL(cotaImg.previa);
+    cotaImg = { url: null, blob: null, previa: null };
+  }
+  function abrirFormCota(c) {
+    cotaEditando = c || null; limparImgCota(); fCota.reset(); aviso(fCota, "", "");
+    var f = fCota.elements;
+    $("#f-cota-titulo").textContent = c ? "Editar cota" : "Nova cota";
+    if (c) {
+      f.nome.value = c.nome; f.valor.value = Number(c.valor).toFixed(2).replace(".", ",");
+      f.ordem.value = c.ordem; f.descricao.value = c.descricao || ""; cotaImg.url = c.imagem || null;
+    } else {
+      f.ordem.value = estado.cotas.reduce(function (m, x) { return Math.max(m, x.ordem + 1); }, 0);
+    }
+    previaCota(); fCota.hidden = false; f.nome.focus();
+    fCota.scrollIntoView({ block: "start", behavior: "smooth" });
+  }
+  $("#abrir-cota").addEventListener("click", function () { abrirFormCota(null); });
+  $("#cancelar-cota").addEventListener("click", function () { limparImgCota(); fCota.reset(); fCota.hidden = true; cotaEditando = null; });
+  $("#atualizar-cotas").addEventListener("click", function () { carregarIntencoes().then(carregarCotas); });
+  $("#cota-escolher").addEventListener("click", function () { $("#cota-arquivo").value = ""; $("#cota-arquivo").click(); });
+  $("#cota-arquivo").addEventListener("change", async function () {
+    var arq = this.files && this.files[0];
+    if (!arq) return;
+    var b = $("#cota-escolher"); ocupado(b, "Preparando...");
+    try {
+      var r = await reduzir(arq, 900);
+      if (cotaImg.previa) URL.revokeObjectURL(cotaImg.previa);
+      cotaImg.blob = r.blob; cotaImg.previa = URL.createObjectURL(r.blob);
+      previaCota();
+    } catch (e) { aviso(fCota, "erro", e.message || "Não consegui abrir a imagem."); }
+    ocupado(b);
+  });
+  $("#cota-tirar-img").addEventListener("click", function () { limparImgCota(); previaCota(); });
+  fCota.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fCota.elements, btn = $("button[type=submit]", fCota);
+    var nome = f.nome.value.trim().replace(/\s+/g, " "), valor = lerValor(f.valor.value);
+    if (nome.length < 2) { aviso(fCota, "erro", "Informe o nome da cota."); f.nome.focus(); return; }
+    if (!(valor >= 1 && valor <= 50000)) { aviso(fCota, "erro", "Valor deve ficar entre R$ 1,00 e R$ 50.000,00 (ex.: 150,00)."); f.valor.focus(); return; }
+    var antiga = cotaEditando ? cotaEditando.imagem : null;
+    var linha = { nome: nome.slice(0, 80), valor: valor, ordem: inteiro(f.ordem.value, 0, 999, 0),
+                  descricao: f.descricao.value.trim().slice(0, 200) || null, imagem: cotaImg.url, atualizado_em: new Date().toISOString() };
+    aviso(fCota, "", ""); ocupado(btn, "Salvando...");
+    try {
+      if (cotaImg.blob) {
+        var ext = cotaImg.blob.type === "image/webp" ? "webp" : "jpg";
+        var arq = "cota-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+        var up = await sb.storage.from("fotos").upload(arq, cotaImg.blob, { contentType: cotaImg.blob.type, cacheControl: "31536000", upsert: false });
+        if (up.error) throw up.error;
+        linha.imagem = sb.storage.from("fotos").getPublicUrl(arq).data.publicUrl;
+        if (linha.imagem.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da imagem.");
+      }
+      var r = cotaEditando
+        ? await sb.from("presentes").update(linha).eq("id", cotaEditando.id).select().single()
+        : await sb.from("presentes").insert(linha).select().single();
+      if (r.error) throw r.error;
+      if (antiga && antiga !== linha.imagem && nomeArquivo(antiga)) sb.storage.from("fotos").remove([nomeArquivo(antiga)]).catch(function () {});
+      limparImgCota(); fCota.reset(); fCota.hidden = true; cotaEditando = null;
+      await carregarCotas();
+    } catch (err) { aviso(fCota, "erro", msgErro(err)); }
+    ocupado(btn);
+  });
+  async function apagarCota(c, btn) {
+    if (!confirm("Apagar a cota \"" + c.nome + "\"? Ela sai do site. As intenções já registradas continuam na lista.")) return;
+    ocupado(btn, "Apagando...");
+    var r = await sb.from("presentes").delete().eq("id", c.id).select("id");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível apagar."); return; }
+    if (nomeArquivo(c.imagem)) sb.storage.from("fotos").remove([nomeArquivo(c.imagem)]).catch(function () {});
+    estado.cotas = estado.cotas.filter(function (x) { return x.id !== c.id; });
+    desenharCotas();
+  }
+
+  async function carregarIntencoes() {
+    var r = await sb.from("intencoes_presente").select("*").order("criado_em", { ascending: false }).limit(2000);
+    if (r.error) { $("#contador-intencoes").textContent = msgErro(r.error); return; }
+    estado.intencoes = r.data || [];
+    desenharIntencoes();
+  }
+  function desenharIntencoes() {
+    var alvo = $("#lista-intencoes"); alvo.textContent = "";
+    var total = estado.intencoes.reduce(function (s, i) { return s + Number(i.valor || 0); }, 0);
+    $("#contador-intencoes").textContent = estado.intencoes.length + (estado.intencoes.length === 1 ? " intenção" : " intenções") +
+      (estado.intencoes.length ? " · soma das cotas escolhidas: " + moeda(total) + " (não é valor recebido)" : "");
+    if (!estado.intencoes.length) { alvo.appendChild(h("div", { class: "vazio", text: "Ninguém deixou o nome numa cota ainda." })); return; }
+    estado.intencoes.forEach(function (i) {
+      alvo.appendChild(h("article", { class: "item" },
+        h("div", { class: "cab" }, h("div", { class: "nome", text: i.nome }), h("span", { class: "selo oculto", text: "Não confirmado" })),
+        h("div", { class: "det" }, h("span", { text: i.presente_nome }), h("span", { class: "valor", text: moeda(i.valor) })),
+        i.mensagem ? h("div", { class: "msg", text: i.mensagem }) : null,
+        h("div", { class: "pe" },
+          h("span", { text: dataBR(i.criado_em) }),
+          h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarIntencao(i, this); } }))
+      ));
+    });
+    if (estado.cotas.length) desenharCotas();
+  }
+  async function apagarIntencao(i, btn) {
+    if (!confirm("Apagar a intenção de \"" + i.nome + "\"?")) return;
+    ocupado(btn, "Apagando...");
+    var r = await sb.from("intencoes_presente").delete().eq("id", i.id).select("id");
+    if (r.error || !r.data || !r.data.length) { ocupado(btn); alert(r.error ? msgErro(r.error) : "Não foi possível apagar."); return; }
+    estado.intencoes = estado.intencoes.filter(function (x) { return x.id !== i.id; });
+    desenharIntencoes();
+  }
+
+  /* textos e limites do site */
+  async function carregarTextos() {
+    try {
+      var lim = (await lerConfig("rsvp")) || {}, casal = (await lerConfig("casal")) || {}, pad = (await lerConfig("padrinhos")) || {};
+      var fl = $("#f-limites").elements;
+      fl.max_adultos.value = inteiro(lim.max_adultos, 1, 20, 10); fl.max_criancas.value = inteiro(lim.max_criancas, 0, 20, 10);
+      $("#f-casal").elements.texto.value = casal.texto || "";
+      $("#f-padrinhos").elements.texto.value = pad.texto || "";
+      $("#f-padrinhos").elements.nomes.value = Array.isArray(pad.nomes) ? pad.nomes.join("\n") : "";
+    } catch (e) { aviso($("#f-limites"), "erro", msgErro(e)); }
+  }
+  function salvarTexto(form, chave, montar, okTxt) {
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      var btn = $("button[type=submit]", form), v = montar(form.elements);
+      if (v && v.erro) { aviso(form, "erro", v.erro); return; }
+      aviso(form, "", ""); ocupado(btn, "Salvando...");
+      try { await gravarConfig(chave, v); aviso(form, "ok", okTxt(v)); }
+      catch (err) { aviso(form, "erro", msgErro(err)); }
+      ocupado(btn);
+    });
+  }
+  salvarTexto($("#f-limites"), "rsvp", function (f) {
+    var a = parseInt(f.max_adultos.value, 10), c = parseInt(f.max_criancas.value, 10);
+    if (!(a >= 1 && a <= 20)) return { erro: "Máximo de adultos: de 1 a 20." };
+    if (!(c >= 0 && c <= 20)) return { erro: "Máximo de crianças: de 0 a 20." };
+    return { max_adultos: a, max_criancas: c };
+  }, function (v) { return "Limites salvos: até " + v.max_adultos + " adulto(s) e " + v.max_criancas + " criança(s) por confirmação."; });
+  salvarTexto($("#f-casal"), "casal", function (f) {
+    return { texto: f.texto.value.trim().slice(0, 4000) || null };
+  }, function (v) { return v.texto ? "Salvo. A seção \"O casal\" já aparece no site." : "Salvo sem texto: a seção fica escondida no site."; });
+  salvarTexto($("#f-padrinhos"), "padrinhos", function (f) {
+    var nomes = f.nomes.value.split(/\r?\n/).map(function (n) { return n.trim().replace(/\s+/g, " ").slice(0, 100); }).filter(Boolean);
+    if (nomes.length > 80) return { erro: "No máximo 80 linhas de nomes." };
+    return { texto: f.texto.value.trim().slice(0, 4000) || null, nomes: nomes };
+  }, function (v) { return v.texto || v.nomes.length ? "Salvo. A seção \"Padrinhos\" já aparece no site." : "Salvo vazio: a seção fica escondida no site."; });
 
   /* conta */
   $("#f-senha").addEventListener("submit", async function (e) {
