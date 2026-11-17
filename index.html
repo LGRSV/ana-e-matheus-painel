@@ -368,6 +368,15 @@
       <p class="contador" id="contador-pagamentos"></p>
       <div class="lista" id="lista-pagamentos"></div>
 
+      <form class="painel-form" id="f-mpconta" novalidate autocomplete="off" style="margin-top:26px; max-width:560px">
+        <h3>Conta que recebe (Mercado Pago)</h3>
+        <p class="nota" id="mp-conta-status">Conferindo a conta conectada...</p>
+        <p class="nota">Para os pagamentos caírem na sua conta: no painel de desenvolvedores do Mercado Pago, abra a aplicação, vá em <b>Credenciais &gt; Produção</b>, copie o <b>Access Token</b> (começa com APP_USR-) e cole aqui. Ele vai direto para o cofre do sistema: não aparece de novo no painel e não é mostrado a ninguém.</p>
+        <label>Access Token de produção<input name="token" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="APP_USR-..."></label>
+        <p class="aviso" role="alert" hidden></p>
+        <div class="linha"><button class="btn cheio" type="submit">Conectar conta</button></div>
+      </form>
+
       <form class="painel-form" id="f-pagamento" novalidate style="margin-top:26px; max-width:560px">
         <h3>Pagamento online (Mercado Pago)</h3>
         <p class="alerta">Só ligue depois que a conta do Mercado Pago estiver com as credenciais de produção ativas.</p>
@@ -762,7 +771,7 @@
   /* dados */
   async function carregarTudo() {
     carregando("Carregando...");
-    try { await Promise.all([carregarPresencas(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix(), carregarCotas(), carregarIntencoes(), carregarTextos(), carregarPagamentos(), carregarConfigPagamento()]); }
+    try { await Promise.all([carregarPresencas(), carregarRecados(), carregarFotos(), carregarVisitas(), carregarPix(), carregarCotas(), carregarIntencoes(), carregarTextos(), carregarPagamentos(), carregarConfigPagamento(), carregarContaMp()]); }
     finally { carregando(""); }
   }
 
@@ -1516,7 +1525,48 @@
   });
   $("#pg-atualizar").addEventListener("click", async function () {
     var b = this; ocupado(b, "Atualizando...");
-    try { await Promise.all([carregarPagamentos(), carregarCotas(), carregarConfigPagamento(true)]); } finally { ocupado(b); }
+    try { await Promise.all([carregarPagamentos(), carregarCotas(), carregarConfigPagamento(true), carregarContaMp()]); } finally { ocupado(b); }
+  });
+
+  /* conta do Mercado Pago que recebe (Edge Function mp-conectar; o token vai direto para o cofre) */
+  var fMp = $("#f-mpconta");
+  async function chamarMp(corpo) {
+    var ses = (await sb.auth.getSession()).data.session;
+    if (!ses) throw { erro: "Sessão expirada. Entre no painel de novo." };
+    var r = await fetch(SB_URL + "/functions/v1/mp-conectar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: SB_KEY, Authorization: "Bearer " + ses.access_token },
+      body: JSON.stringify(corpo)
+    });
+    var d = {};
+    try { d = await r.json(); } catch (x) {}
+    if (!r.ok) throw { erro: d.erro || d.message || d.msg || ("Falha no servidor (" + r.status + ")." ) };
+    return d;
+  }
+  function textoConta(c) { return c ? (c.nome || c.apelido || "conta " + c.id) + (c.apelido && c.nome ? " (" + c.apelido + ")" : "") : ""; }
+  async function carregarContaMp() {
+    var st = $("#mp-conta-status");
+    try {
+      var d = await chamarMp({ acao: "status" });
+      if (d.conectado) { st.textContent = "Conectada: " + textoConta(d.conta) + ". Os pagamentos online caem nesta conta."; st.style.color = "var(--ok)"; }
+      else if (d.modo === "producao" && d.estado === "recusado") { st.textContent = "O Mercado Pago recusou o token salvo (pode ter sido renovado). Cole o Access Token de produção atual abaixo."; st.style.color = "var(--err)"; }
+      else if (d.modo === "producao" && d.estado === "fora") { st.textContent = "Há uma conta salva, mas não consegui falar com o Mercado Pago agora para conferir. Tente atualizar em alguns minutos."; st.style.color = "var(--err)"; }
+      else if (d.modo === "teste") { st.textContent = "Ainda em modo de teste (nenhuma conta real conectada). Cole o Access Token de produção abaixo."; st.style.color = "var(--err)"; }
+      else { st.textContent = "Nenhuma conta conectada. Cole o Access Token de produção abaixo."; st.style.color = "var(--err)"; }
+    } catch (e) { st.textContent = "Não consegui conferir a conta: " + (e && e.erro ? e.erro : msgErro(e)); st.style.color = "var(--err)"; }
+  }
+  fMp.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var f = fMp.elements, btn = $("button[type=submit]", fMp), t = f.token.value.replace(/\s+/g, "");
+    if (!/^APP_USR-/.test(t)) { aviso(fMp, "erro", "Cole o Access Token de produção (começa com APP_USR-)."); f.token.focus(); return; }
+    aviso(fMp, "", ""); ocupado(btn, "Conferindo no Mercado Pago...");
+    try {
+      var d = await chamarMp({ acao: "conectar", token: t });
+      f.token.value = "";
+      aviso(fMp, "ok", "Conta conectada: " + textoConta(d.conta) + ". Para os convidados verem os botões, ligue o pagamento online abaixo.");
+      await carregarContaMp();
+    } catch (err) { aviso(fMp, "erro", err && err.erro ? err.erro : msgErro(err)); }
+    ocupado(btn);
   });
 
   /* configuração do pagamento online: config chave "pagamento" */
