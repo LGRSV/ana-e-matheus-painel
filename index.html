@@ -150,6 +150,8 @@
   .aj-passo:active{background:var(--bg2)}
   .aj-pontas{display:flex; justify-content:space-between; padding:0 48px; font-size:11px; color:var(--soft)}
   .aj-abrir{font-size:13px; font-weight:600}
+  .ajuste .seg.aj-encaixe{display:inline-flex; justify-self:start; flex-wrap:wrap; border-radius:22px} /* aparece também no computador (.ajuste .seg esconde só o Celular/Computador) */
+  .aj-dica{margin:2px 0 0}
   @media (max-width:719px){
     .aj-grade[data-ver=celular] .aj[data-disp=computador], .aj-grade[data-ver=computador] .aj[data-disp=celular]{display:none}
     .aj legend{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
@@ -493,7 +495,7 @@
         </div>
         <section class="ajuste" id="capa-ajuste" aria-labelledby="t-ajuste">
           <h3 id="t-ajuste">Ajustar a foto da capa</h3>
-          <p class="nota">Mova os controles e veja na prévia como a capa fica no site, no celular e no computador. O ajuste vale para a foto da capa que está salva; quando a foto da capa é trocada, ele volta ao padrão.</p>
+          <p class="nota">Mova os controles e veja na prévia como a capa fica no site, no celular e no computador. No computador também dá para mudar a altura da faixa do fundo e se a foto aparece inteira. O ajuste vale para a foto da capa que está salva; quando a foto da capa é trocada, ele volta ao padrão.</p>
           <div class="seg" id="aj-ver" role="group" aria-label="Ajustar para">
             <button type="button" data-ver="celular" aria-pressed="true">Celular</button>
             <button type="button" data-ver="computador" aria-pressed="false">Computador</button>
@@ -1213,17 +1215,19 @@
     }
   }
 
-  /* enquadramento da foto da capa: config "fotos".capa_ajuste = {celular:{x,y,zoom}, computador:{x,y,zoom}}.
-     x e y de 0 a 100 (parte da foto à mostra), zoom de 1 a 2. O site aplica com os mesmos limites.
-     A prévia é o próprio site num iframe com ?capa_cel=x,y,zoom&capa_pc=x,y,zoom; depois de aberto,
+  /* enquadramento da foto da capa: config "fotos".capa_ajuste = {celular:{x,y,zoom}, computador:{x,y,zoom,altura,encaixe}}.
+     x e y de 0 a 100 (parte da foto à mostra), zoom de 1 a 2. Só no computador (faixa do fundo): altura de 70 a 140 (% da altura
+     de sempre, 100 = igual) e encaixe "preencher" (cobre a faixa, corta o que passar) ou "inteira" (a foto inteira, sem cortar).
+     O site aplica com os mesmos limites; ajuste salvo antes (só x, y e zoom) continua valendo, com altura 100 e "preencher".
+     A prévia é o próprio site num iframe com ?capa_cel=x,y,zoom&capa_pc=x,y,zoom,altura,encaixe; depois de aberto,
      os controles mandam os valores por mensagem (sem recarregar). */
   var SITE_ORIGEM = new URL(SITE).origin;
   /* padrões iguais aos do CSS da .capa no site: foto original; foto enviada pelo painel (desce 22% para não sobrar
      parede/céu em cima); foto enviada bem alta (altura >= 1,4 x largura, como 2:3 de corpo inteiro: cabeça quase no topo, fica no 0%) */
   var AJ_PADRAO = {
-    original: { celular: { x: 50, y: 0, zoom: 1.3 }, computador: { x: 50, y: 0, zoom: 1.3 } },
-    nova: { celular: { x: 50, y: 22, zoom: 1 }, computador: { x: 50, y: 22, zoom: 1 } },
-    novaAlta: { celular: { x: 50, y: 0, zoom: 1 }, computador: { x: 50, y: 0, zoom: 1 } }
+    original: { celular: { x: 50, y: 0, zoom: 1.3 }, computador: { x: 50, y: 0, zoom: 1.3, altura: 100, encaixe: "preencher" } },
+    nova: { celular: { x: 50, y: 22, zoom: 1 }, computador: { x: 50, y: 22, zoom: 1, altura: 100, encaixe: "preencher" } },
+    novaAlta: { celular: { x: 50, y: 0, zoom: 1 }, computador: { x: 50, y: 0, zoom: 1, altura: 100, encaixe: "preencher" } }
   };
   var AJ_ALTA = 1.4; /* mesmo corte do site (classe foto-alta) */
   var AJ_CAMPOS = [
@@ -1231,8 +1235,15 @@
     { k: "y", nome: "Vertical", min: 0, max: 100, passo: 1, pontas: ["topo", "embaixo"] },
     { k: "zoom", nome: "Zoom", min: 1, max: 2, passo: 0.05, pontas: ["1x", "2x"] }
   ];
+  /* faixa do fundo (só no computador): altura e encaixe da foto */
+  var AJ_ALTURA = { k: "altura", nome: "Altura da faixa", min: 70, max: 140, passo: 5, pontas: ["mais baixa", "mais alta"] };
+  var AJ_ENCAIXES = [
+    { v: "preencher", nome: "Preencher a faixa", dica: "A foto cobre a faixa toda e o que passar fica cortado." },
+    { v: "inteira", nome: "Foto inteira", dica: "A foto aparece inteira, sem cortar cabeça nem corpo; as laterais escurecem junto com o fundo." }
+  ];
   var AJ_DISP = ["celular", "computador"];
-  var aj = { salvo: null, valores: null, mexido: false, entradas: {}, saidas: {}, telas: [], fotoMedida: null, fotoAlta: false };
+  function ajCampos(d) { return d === "computador" ? [AJ_ALTURA].concat(AJ_CAMPOS) : AJ_CAMPOS; }
+  var aj = { salvo: null, valores: null, mexido: false, entradas: {}, saidas: {}, encaixes: [], telas: [], fotoMedida: null, fotoAlta: false };
   function ajPadrao() {
     var p = !estado.fotos.capa ? AJ_PADRAO.original : aj.fotoAlta ? AJ_PADRAO.novaAlta : AJ_PADRAO.nova;
     return JSON.parse(JSON.stringify(p));
@@ -1255,7 +1266,7 @@
     v = typeof v === "string" && v.trim() !== "" ? Number(v) : v;
     if (typeof v !== "number" || !isFinite(v)) return null;
     v = Math.min(max, Math.max(min, v));
-    return passo < 1 ? Math.round(v * 100) / 100 : Math.round(v);
+    return passo < 1 ? Math.round(v * 100) / 100 : Math.round(v / passo) * passo;
   }
   /* devolve {celular:{x,y,zoom}, computador:{...}} completo e dentro dos limites, ou null se não houver ajuste */
   function limparAjuste(v) {
@@ -1263,23 +1274,36 @@
     var base = ajPadrao(), algum = false;
     AJ_DISP.forEach(function (d) {
       var o = v[d] && typeof v[d] === "object" ? v[d] : {};
-      AJ_CAMPOS.forEach(function (c) {
+      ajCampos(d).forEach(function (c) {
         var n = ajNumero(o[c.k], c.min, c.max, c.passo);
         if (n !== null) { base[d][c.k] = n; algum = true; }
       });
+      if (d === "computador" && (o.encaixe === "inteira" || o.encaixe === "preencher")) { base[d].encaixe = o.encaixe; algum = true; }
     });
     return algum ? base : null;
   }
   function ajTexto(k, v) { return k === "zoom" ? v.toFixed(2).replace(".", ",") + "x" : Math.round(v) + "%"; }
-  function ajParam(o) { return o.x + "," + o.y + "," + o.zoom; }
-  function urlPrevia() { return SITE + "?teste=1&capa_cel=" + ajParam(aj.valores.celular) + "&capa_pc=" + ajParam(aj.valores.computador); }
+  function ajParam(o, d) { var t = o.x + "," + o.y + "," + o.zoom; return d === "computador" ? t + "," + o.altura + "," + o.encaixe : t; }
+  function urlPrevia() { return SITE + "?teste=1&capa_cel=" + ajParam(aj.valores.celular, "celular") + "&capa_pc=" + ajParam(aj.valores.computador, "computador"); }
   function ajIguais(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 
-  /* monta os controles (horizontal, vertical, zoom) de cada aparelho */
+  /* monta os controles de cada aparelho: horizontal, vertical e zoom; no computador, antes deles, o encaixe e a altura da faixa */
   AJ_DISP.forEach(function (d) {
     var caixa = $(".aj[data-disp=" + d + "] .aj-controles");
     aj.entradas[d] = {}; aj.saidas[d] = {};
-    AJ_CAMPOS.forEach(function (c) {
+    if (d === "computador") {
+      var dicaEnc = h("p", { class: "nota aj-dica", id: "aj-enc-dica" });
+      var botoesEnc = h("div", { class: "seg aj-encaixe", role: "group", "aria-labelledby": "aj-enc-rotulo" });
+      AJ_ENCAIXES.forEach(function (e) {
+        var b = h("button", { type: "button", "data-encaixe": e.v, "aria-pressed": "false", text: e.nome,
+                              onclick: function () { aj.valores.computador.encaixe = e.v; aj.mexido = true; mostrarValores(); enviarPrevias(); } });
+        aj.encaixes.push({ v: e.v, botao: b, dica: e.dica });
+        botoesEnc.appendChild(b);
+      });
+      caixa.appendChild(h("div", { class: "aj-linha" },
+        h("div", { class: "aj-rotulo" }, h("span", { id: "aj-enc-rotulo", text: "Encaixe da foto na faixa" })), botoesEnc, dicaEnc));
+    }
+    ajCampos(d).forEach(function (c) {
       var id = "aj-" + d + "-" + c.k, nomeD = d === "celular" ? "celular" : "computador";
       var faixa = h("input", { type: "range", id: id, min: c.min, max: c.max, step: c.passo });
       var saida = h("output", { for: id });
@@ -1300,15 +1324,23 @@
         h("div", { class: "aj-pontas", "aria-hidden": "true" }, h("span", { text: c.pontas[0] }), h("span", { text: c.pontas[1] }))));
       aj.entradas[d][c.k] = faixa; aj.saidas[d][c.k] = saida;
     });
+    if (d === "computador") {
+      caixa.appendChild(h("p", { class: "nota aj-dica", text: "O zoom vale só para o círculo da foto; em \"Foto inteira\", a faixa usa só a posição horizontal. A faixa não fica mais baixa que o círculo da foto. A prévia mostra o alto da página, como numa tela de notebook; para ver a faixa toda, use \"Abrir a prévia em outra aba\"." }));
+    }
   });
 
   function mostrarValores() {
     AJ_DISP.forEach(function (d) {
-      AJ_CAMPOS.forEach(function (c) {
+      ajCampos(d).forEach(function (c) {
         var v = aj.valores[d][c.k], t = ajTexto(c.k, v);
         aj.entradas[d][c.k].value = v; aj.entradas[d][c.k].setAttribute("aria-valuetext", t);
         aj.saidas[d][c.k].textContent = t;
       });
+    });
+    aj.encaixes.forEach(function (e) {
+      var ativo = aj.valores.computador.encaixe === e.v;
+      e.botao.setAttribute("aria-pressed", ativo ? "true" : "false");
+      if (ativo) $("#aj-enc-dica").textContent = e.dica;
     });
     var ref = aj.salvo || ajPadrao(), igual = ajIguais(aj.valores, ref), e = $("#aj-estado");
     e.textContent = !igual ? "Alteração ainda não salva: toque em \"Salvar ajuste\" para valer no site."
