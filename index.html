@@ -123,10 +123,37 @@
   .foto{background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden}
   .foto .quadro{position:relative; background:var(--bg2); aspect-ratio:4 / 3}
   .foto .quadro img{width:100%; height:100%; object-fit:cover; display:block}
-  .foto[data-chave=capa] .quadro img{object-position:50% 8%}
+  .foto[data-chave=capa] .quadro img{object-position:50% 0%}
   .foto .quadro .etiqueta{position:absolute; left:10px; top:10px; background:rgba(15,20,26,.78); color:#fff; font-size:12px; font-weight:600; border-radius:999px; padding:4px 10px}
   .foto .corpo{padding:14px; display:grid; gap:10px}
   .foto .corpo p{margin:0; font-size:14px; color:var(--soft)}
+
+  /* ajuste do enquadramento da foto da capa (prévia ao vivo do site) */
+  .ajuste{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; display:grid; gap:12px; min-width:0; scroll-margin-top:118px}
+  .ajuste h3{margin:0; font:400 24px/1.2 var(--serif)}
+  .ajuste .seg{justify-self:start}
+  .aj-grade{display:grid; gap:16px; min-width:0}
+  .aj{border:0; margin:0; padding:0; min-width:0; display:grid; gap:12px; align-content:start}
+  .aj legend{padding:0; margin:0 0 10px; font-weight:700; font-size:14px}
+  .aj-previa{position:relative; overflow:hidden; width:100%; height:0; background:var(--dark); border:1px solid var(--line); border-radius:12px}
+  .aj-previa.cel{max-width:230px; margin:0 auto; border-radius:22px; border:6px solid var(--dark)}
+  .aj-previa .aguarde{position:absolute; inset:0; display:grid; place-items:center; padding:12px; text-align:center; color:#aab3bb; font-size:13px}
+  .aj-previa iframe{position:absolute; left:0; top:0; border:0; transform-origin:0 0; pointer-events:none}
+  .aj-controles{display:grid; gap:12px}
+  .aj-linha{display:grid; gap:2px}
+  .aj-rotulo{display:flex; justify-content:space-between; align-items:baseline; gap:8px; font-size:14px; font-weight:600}
+  .aj-rotulo output{font-variant-numeric:tabular-nums; font-weight:700; color:var(--accent)}
+  .aj-faixa{display:flex; align-items:center; gap:8px}
+  .aj-faixa input{flex:1; min-width:0; height:40px; margin:0; accent-color:var(--accent); cursor:pointer}
+  .aj-passo{flex:none; width:40px; height:40px; padding:0; border-radius:50%; border:1px solid var(--line); background:var(--bg);
+            color:var(--ink); font:600 20px/1 var(--sans); cursor:pointer}
+  .aj-passo:active{background:var(--bg2)}
+  .aj-pontas{display:flex; justify-content:space-between; padding:0 48px; font-size:11px; color:var(--soft)}
+  .aj-abrir{font-size:13px; font-weight:600}
+  @media (max-width:719px){
+    .aj-grade[data-ver=celular] .aj[data-disp=computador], .aj-grade[data-ver=computador] .aj[data-disp=celular]{display:none}
+    .aj legend{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap}
+  }
 
   .conta{display:grid; gap:16px; max-width:460px}
   .textos{display:grid; gap:2px; max-width:680px}
@@ -177,7 +204,12 @@
     .numeros{grid-template-columns:repeat(5, 1fr)}
     .numeros .destaque{grid-column:auto}
     .ferramentas{grid-template-columns:1fr auto}
-    .fotos{grid-template-columns:1fr 1fr}
+    .fotos{grid-template-columns:1fr 1fr; grid-template-areas:"capa local" "ajuste ajuste"}
+    .foto[data-chave=capa]{grid-area:capa}
+    .foto[data-chave=local]{grid-area:local}
+    .ajuste{grid-area:ajuste; padding:20px}
+    .ajuste .seg{display:none}
+    .aj-grade{grid-template-columns:minmax(220px, 250px) minmax(0, 1fr); gap:28px}
     .pix-grade{grid-template-columns:1.2fr 1fr; align-items:start}
     .lista.recados, .lista.cotas{grid-template-columns:1fr 1fr}
     .numeros.tres{grid-template-columns:repeat(3, 1fr)}
@@ -273,7 +305,7 @@
 
       <form class="painel-form" id="f-novo" novalidate hidden>
         <h3>Adicionar confirmação manualmente</h3>
-        <p class="nota">Para quem confirmou pelo casar.com, por telefone ou pessoalmente.</p>
+        <p class="nota">Para quem confirmou por telefone, por mensagem ou pessoalmente.</p>
         <label>Nome<input name="nome" required maxlength="120"></label>
         <div class="ops">
           <label><input type="radio" name="vai" value="sim" checked> Vai</label>
@@ -453,11 +485,39 @@
               <button class="btn peq" type="button" data-acao="salvar" hidden>Salvar esta foto</button>
               <button class="btn peq" type="button" data-acao="cancelar" hidden>Cancelar</button>
               <button class="btn perigo peq" type="button" data-acao="original">Voltar à foto original</button>
+              <a class="btn peq" href="#capa-ajuste">Ajustar enquadramento</a>
             </div>
             <p class="aviso" role="alert" hidden></p>
             <input type="file" accept="image/*" hidden>
           </div>
         </div>
+        <section class="ajuste" id="capa-ajuste" aria-labelledby="t-ajuste">
+          <h3 id="t-ajuste">Ajustar a foto da capa</h3>
+          <p class="nota">Mova os controles e veja na prévia como a capa fica no site, no celular e no computador. O ajuste vale para a foto da capa que está salva; quando a foto da capa é trocada, ele volta ao padrão.</p>
+          <div class="seg" id="aj-ver" role="group" aria-label="Ajustar para">
+            <button type="button" data-ver="celular" aria-pressed="true">Celular</button>
+            <button type="button" data-ver="computador" aria-pressed="false">Computador</button>
+          </div>
+          <div class="aj-grade" id="aj-grade" data-ver="celular">
+            <fieldset class="aj" data-disp="celular">
+              <legend>Celular</legend>
+              <div class="aj-previa cel"><span class="aguarde">Carregando a prévia...</span></div>
+              <div class="aj-controles"></div>
+            </fieldset>
+            <fieldset class="aj" data-disp="computador">
+              <legend>Computador</legend>
+              <div class="aj-previa pc"><span class="aguarde">Carregando a prévia...</span></div>
+              <div class="aj-controles"></div>
+            </fieldset>
+          </div>
+          <p class="nota" id="aj-estado" role="status"></p>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha">
+            <button class="btn cheio" type="button" id="aj-salvar">Salvar ajuste</button>
+            <button class="btn" type="button" id="aj-padrao">Voltar ao padrão</button>
+            <a class="aj-abrir" id="aj-abrir" href="https://lgrsv.github.io/ana-e-matheus-2027/" target="_blank" rel="noopener">Abrir a prévia em outra aba</a>
+          </div>
+        </section>
         <div class="foto" data-chave="local">
           <div class="quadro"><img alt="Foto do local (Cabana do Lago)"><span class="etiqueta">Local · Cabana do Lago</span></div>
           <div class="corpo">
@@ -782,6 +842,10 @@
     desenharPresencas();
   }
 
+  /* origem da confirmação; "casar" é o valor gravado nas importações de planilha (lista antiga) e continua valendo */
+  var ORIGENS = { site: "pelo site", casar: "importado da lista antiga", manual: "adicionado no painel" };
+  function origemTxt(o) { return ORIGENS[o] || o || ""; }
+
   function desenharPresencas() {
     var vao = 0, adultos = 0, criancas = 0, naovao = 0;
     estado.presencas.forEach(function (p) {
@@ -811,7 +875,6 @@
       alvo.appendChild(h("div", { class: "vazio", text: estado.presencas.length ? "Nenhum registro com esse filtro." : "Ainda não há confirmações." }));
       return;
     }
-    var origens = { site: "pelo site", casar: "importado do casar.com", manual: "adicionado no painel" };
     lista.forEach(function (p) {
       var tel = p.telefone ? h("a", { href: "tel:" + p.telefone.replace(/[^\d+]/g, ""), text: p.telefone }) : null;
       var mail = p.email ? h("a", { href: "mailto:" + p.email, text: p.email }) : null;
@@ -825,7 +888,7 @@
           : (tel || mail ? h("div", { class: "det" }, tel, mail) : null),
         p.mensagem ? h("div", { class: "msg", text: p.mensagem }) : null,
         h("div", { class: "pe" },
-          h("span", { text: dataBR(p.criado_em) + " · " + (origens[p.origem] || p.origem) }),
+          h("span", { text: dataBR(p.criado_em) + " · " + origemTxt(p.origem) }),
           h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarPresenca(p, this); } }))
       ));
     });
@@ -894,7 +957,7 @@
     var linhas = [["Nome", "Vai", "Adultos", "Crianças", "Telefone", "E-mail", "Mensagem", "Origem", "Data"]];
     estado.presencas.slice().sort(function (a, b) { return semAcento(a.nome).localeCompare(semAcento(b.nome), "pt-BR"); })
       .forEach(function (p) {
-        linhas.push([p.nome, p.vai ? "Sim" : "Não", p.adultos, p.criancas, p.telefone, p.email, p.mensagem, p.origem, dataBR(p.criado_em)]);
+        linhas.push([p.nome, p.vai ? "Sim" : "Não", p.adultos, p.criancas, p.telefone, p.email, p.mensagem, origemTxt(p.origem), dataBR(p.criado_em)]);
       });
     var csv = "﻿" + linhas.map(function (l) { return l.map(celula).join(";"); }).join("\r\n") + "\r\n";
     var blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -966,14 +1029,14 @@
         criancas: vai ? inteiro(col.criancas >= 0 ? l[col.criancas] : "", 0, 20, 0) : 0,
         email: em && emailOk(em) ? em : null,
         telefone: tl || null,
-        origem: "casar"
+        origem: "casar" /* valor interno das importações (lista antiga); o painel mostra "importado da lista antiga" */
       });
     });
     if (!novos.length) { alert("Nenhuma linha válida encontrada. O arquivo precisa ter as colunas: nome; vai; adultos; crianças."); return; }
     var existentes = {};
     estado.presencas.forEach(function (p) { existentes[semAcento(p.nome)] = true; });
     var repetidos = novos.filter(function (n) { return existentes[semAcento(n.nome)]; }).length;
-    var texto = "Importar " + novos.length + " confirmação(ões) do arquivo \"" + arq.name + "\" como origem casar.com?";
+    var texto = "Importar " + novos.length + " confirmação(ões) do arquivo \"" + arq.name + "\"? Elas ficam marcadas como \"importado da lista antiga\".";
     if (repetidos) texto += "\n\nAtenção: " + repetidos + " nome(s) já existem na lista e ficarão duplicados.";
     if (ignorados) texto += "\n" + ignorados + " linha(s) sem nome serão ignoradas.";
     texto += "\n\nPrimeiro: " + novos[0].nome + " (" + (novos[0].vai ? "vai, " + novos[0].adultos + " adulto(s), " + novos[0].criancas + " criança(s)" : "não vai") + ")";
@@ -1032,8 +1095,11 @@
   /* fotos */
   async function carregarFotos() {
     var r = await sb.from("config").select("valor").eq("chave", "fotos").maybeSingle();
-    if (!r.error && r.data && r.data.valor) estado.fotos = { capa: r.data.valor.capa || null, local: r.data.valor.local || null };
-    desenharFotos();
+    if (!r.error && r.data && r.data.valor) {
+      estado.fotos = { capa: r.data.valor.capa || null, local: r.data.valor.local || null };
+      aj.salvo = limparAjuste(r.data.valor.capa_ajuste);
+    }
+    desenharFotos(); desenharAjuste();
   }
   function desenharFotos() {
     $$(".foto").forEach(function (card) {
@@ -1109,14 +1175,18 @@
         if (pub.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da foto.");
         await salvarFoto(k, pub);
         limparPrevia();
-        aviso(card, "ok", "Foto salva! Ela já aparece no site (recarregue a página do site para ver).");
+        aviso(card, "ok", "Foto salva! Ela já aparece no site (recarregue a página do site para ver)." +
+          (k === "capa" ? " O enquadramento voltou ao padrão; se precisar, ajuste logo abaixo." : ""));
       } catch (e) { aviso(card, "erro", msgErro(e)); }
       ocupado(bSal); bCan.disabled = false;
     });
     bOri.addEventListener("click", async function () {
       if (!confirm("Voltar à foto original do site nesta posição?")) return;
       ocupado(bOri, "Salvando...");
-      try { await salvarFoto(k, null); aviso(card, "ok", "Pronto, o site voltou a usar a foto original."); }
+      try {
+        await salvarFoto(k, null);
+        aviso(card, "ok", "Pronto, o site voltou a usar a foto original." + (k === "capa" ? " O enquadramento também voltou ao padrão." : ""));
+      }
       catch (e) { aviso(card, "erro", msgErro(e)); }
       ocupado(bOri); desenharFotos();
     });
@@ -1127,6 +1197,8 @@
     if (atual.error) throw atual.error;
     var valor = Object.assign({ capa: null, local: null }, (atual.data && atual.data.valor) || {});
     valor[chave] = url;
+    /* outra foto na capa: o enquadramento salvo era da foto anterior, então volta ao padrão */
+    if (chave === "capa") delete valor.capa_ajuste;
     var r;
     if (atual.data) r = await sb.from("config").update({ valor: valor, atualizado_em: new Date().toISOString() }).eq("chave", "fotos").select("chave");
     else r = await sb.from("config").insert({ chave: "fotos", valor: valor }).select("chave");
@@ -1134,7 +1206,235 @@
     if (!r.data || !r.data.length) throw new Error("sem permissão para alterar as fotos.");
     estado.fotos = { capa: valor.capa, local: valor.local };
     desenharFotos();
+    if (chave === "capa") {
+      aj.salvo = null; aj.mexido = false;
+      aviso($("#capa-ajuste"), "", ""); /* tira o aviso do ajuste anterior ("Ajuste salvo!"), que era da outra foto */
+      desenharAjuste(); recarregarPrevias();
+    }
   }
+
+  /* enquadramento da foto da capa: config "fotos".capa_ajuste = {celular:{x,y,zoom}, computador:{x,y,zoom}}.
+     x e y de 0 a 100 (parte da foto à mostra), zoom de 1 a 2. O site aplica com os mesmos limites.
+     A prévia é o próprio site num iframe com ?capa_cel=x,y,zoom&capa_pc=x,y,zoom; depois de aberto,
+     os controles mandam os valores por mensagem (sem recarregar). */
+  var SITE_ORIGEM = new URL(SITE).origin;
+  /* padrões iguais aos do CSS da .capa no site: foto original; foto enviada pelo painel (desce 22% para não sobrar
+     parede/céu em cima); foto enviada bem alta (altura >= 1,4 x largura, como 2:3 de corpo inteiro: cabeça quase no topo, fica no 0%) */
+  var AJ_PADRAO = {
+    original: { celular: { x: 50, y: 0, zoom: 1.3 }, computador: { x: 50, y: 0, zoom: 1.3 } },
+    nova: { celular: { x: 50, y: 22, zoom: 1 }, computador: { x: 50, y: 22, zoom: 1 } },
+    novaAlta: { celular: { x: 50, y: 0, zoom: 1 }, computador: { x: 50, y: 0, zoom: 1 } }
+  };
+  var AJ_ALTA = 1.4; /* mesmo corte do site (classe foto-alta) */
+  var AJ_CAMPOS = [
+    { k: "x", nome: "Horizontal", min: 0, max: 100, passo: 1, pontas: ["esquerda", "direita"] },
+    { k: "y", nome: "Vertical", min: 0, max: 100, passo: 1, pontas: ["topo", "embaixo"] },
+    { k: "zoom", nome: "Zoom", min: 1, max: 2, passo: 0.05, pontas: ["1x", "2x"] }
+  ];
+  var AJ_DISP = ["celular", "computador"];
+  var aj = { salvo: null, valores: null, mexido: false, entradas: {}, saidas: {}, telas: [], fotoMedida: null, fotoAlta: false };
+  function ajPadrao() {
+    var p = !estado.fotos.capa ? AJ_PADRAO.original : aj.fotoAlta ? AJ_PADRAO.novaAlta : AJ_PADRAO.nova;
+    return JSON.parse(JSON.stringify(p));
+  }
+  /* o padrão da foto enviada depende do formato dela: mede a foto da capa salva (uma vez por endereço) */
+  function medirFotoCapa() {
+    var url = estado.fotos.capa;
+    if (aj.fotoMedida === url) return;
+    aj.fotoMedida = url; aj.fotoAlta = false;
+    if (!url) return;
+    var im = new Image();
+    im.onload = function () {
+      if (aj.fotoMedida !== url) return;
+      var alta = im.naturalHeight >= im.naturalWidth * AJ_ALTA;
+      if (alta !== aj.fotoAlta) { aj.fotoAlta = alta; desenharAjuste(); }
+    };
+    im.src = url;
+  }
+  function ajNumero(v, min, max, passo) {
+    v = typeof v === "string" && v.trim() !== "" ? Number(v) : v;
+    if (typeof v !== "number" || !isFinite(v)) return null;
+    v = Math.min(max, Math.max(min, v));
+    return passo < 1 ? Math.round(v * 100) / 100 : Math.round(v);
+  }
+  /* devolve {celular:{x,y,zoom}, computador:{...}} completo e dentro dos limites, ou null se não houver ajuste */
+  function limparAjuste(v) {
+    if (!v || typeof v !== "object") return null;
+    var base = ajPadrao(), algum = false;
+    AJ_DISP.forEach(function (d) {
+      var o = v[d] && typeof v[d] === "object" ? v[d] : {};
+      AJ_CAMPOS.forEach(function (c) {
+        var n = ajNumero(o[c.k], c.min, c.max, c.passo);
+        if (n !== null) { base[d][c.k] = n; algum = true; }
+      });
+    });
+    return algum ? base : null;
+  }
+  function ajTexto(k, v) { return k === "zoom" ? v.toFixed(2).replace(".", ",") + "x" : Math.round(v) + "%"; }
+  function ajParam(o) { return o.x + "," + o.y + "," + o.zoom; }
+  function urlPrevia() { return SITE + "?teste=1&capa_cel=" + ajParam(aj.valores.celular) + "&capa_pc=" + ajParam(aj.valores.computador); }
+  function ajIguais(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
+
+  /* monta os controles (horizontal, vertical, zoom) de cada aparelho */
+  AJ_DISP.forEach(function (d) {
+    var caixa = $(".aj[data-disp=" + d + "] .aj-controles");
+    aj.entradas[d] = {}; aj.saidas[d] = {};
+    AJ_CAMPOS.forEach(function (c) {
+      var id = "aj-" + d + "-" + c.k, nomeD = d === "celular" ? "celular" : "computador";
+      var faixa = h("input", { type: "range", id: id, min: c.min, max: c.max, step: c.passo });
+      var saida = h("output", { for: id });
+      function mudar(v) {
+        var n = ajNumero(v, c.min, c.max, c.passo);
+        if (n === null) return;
+        aj.valores[d][c.k] = n; aj.mexido = true;
+        mostrarValores(); enviarPrevias();
+      }
+      faixa.addEventListener("input", function () { mudar(faixa.value); });
+      var menos = h("button", { type: "button", class: "aj-passo", "aria-label": "Diminuir " + c.nome.toLowerCase() + " (" + nomeD + ")", text: "−",
+                                onclick: function () { mudar(aj.valores[d][c.k] - c.passo); } });
+      var mais = h("button", { type: "button", class: "aj-passo", "aria-label": "Aumentar " + c.nome.toLowerCase() + " (" + nomeD + ")", text: "+",
+                               onclick: function () { mudar(aj.valores[d][c.k] + c.passo); } });
+      caixa.appendChild(h("div", { class: "aj-linha" },
+        h("div", { class: "aj-rotulo" }, h("label", { for: id, text: c.nome }), saida),
+        h("div", { class: "aj-faixa" }, menos, faixa, mais),
+        h("div", { class: "aj-pontas", "aria-hidden": "true" }, h("span", { text: c.pontas[0] }), h("span", { text: c.pontas[1] }))));
+      aj.entradas[d][c.k] = faixa; aj.saidas[d][c.k] = saida;
+    });
+  });
+
+  function mostrarValores() {
+    AJ_DISP.forEach(function (d) {
+      AJ_CAMPOS.forEach(function (c) {
+        var v = aj.valores[d][c.k], t = ajTexto(c.k, v);
+        aj.entradas[d][c.k].value = v; aj.entradas[d][c.k].setAttribute("aria-valuetext", t);
+        aj.saidas[d][c.k].textContent = t;
+      });
+    });
+    var ref = aj.salvo || ajPadrao(), igual = ajIguais(aj.valores, ref), e = $("#aj-estado");
+    e.textContent = !igual ? "Alteração ainda não salva: toque em \"Salvar ajuste\" para valer no site."
+                  : aj.salvo ? "Usando o ajuste salvo." : "Usando o enquadramento padrão.";
+    e.style.color = igual ? "" : "var(--err)";
+    $("#aj-abrir").href = urlPrevia();
+  }
+  /* valores salvos (ou padrão) nos controles; não apaga o que está sendo mexido e ainda não foi salvo */
+  function desenharAjuste() {
+    medirFotoCapa();
+    if (!aj.mexido || !aj.valores) aj.valores = aj.salvo ? JSON.parse(JSON.stringify(aj.salvo)) : ajPadrao();
+    mostrarValores(); enviarPrevias();
+  }
+
+  /* prévias: o iframe só é criado quando a caixa aparece na tela (aba Fotos aberta) */
+  function enviarPrevia(t) {
+    if (!t.iframe) return;
+    if (t.pronto) {
+      try { t.iframe.contentWindow.postMessage({ tipo: "am2027-capa", celular: aj.valores.celular, computador: aj.valores.computador }, SITE_ORIGEM); return; }
+      catch (e) { t.pronto = false; }
+    }
+    if (t.carregando) return; /* ao terminar de carregar, confere de novo */
+    agendarRecarga(t);
+  }
+  /* sem conversa com o site (página antiga em cache ou outro endereço): recarrega com os valores na URL */
+  function agendarRecarga(t, ja) {
+    clearTimeout(t.timer);
+    t.timer = setTimeout(function () {
+      var u = urlPrevia();
+      if (!ja && t.iframe.src === u) return;
+      t.carregando = true; t.pronto = false; t.iframe.src = u;
+    }, ja ? 0 : 450);
+  }
+  function enviarPrevias() { aj.telas.forEach(enviarPrevia); }
+  function recarregarPrevias() { aj.telas.forEach(function (t) { if (t.iframe) agendarRecarga(t, true); }); }
+  function criarPrevia(t) {
+    t.iframe = h("iframe", { title: "Prévia da capa do site no " + t.disp, tabindex: "-1", "aria-hidden": "true", inert: true,
+                             width: t.w, height: t.h, style: "width:" + t.w + "px;height:" + t.h + "px" });
+    t.iframe.addEventListener("load", function () {
+      t.carregando = false;
+      if (!t.pronto && t.iframe.src !== urlPrevia()) agendarRecarga(t);
+    });
+    t.carregando = true; t.pronto = false;
+    t.iframe.src = urlPrevia();
+    t.caixa.appendChild(t.iframe);
+  }
+  function escalar(t) {
+    var larg = t.caixa.clientWidth;
+    /* só a largura manda (a altura da caixa é este código que põe): largura igual, nada a fazer */
+    if (!larg || larg === t.larg) return;
+    t.larg = larg;
+    var s = larg / t.w, borda = t.caixa.offsetWidth - larg;
+    t.caixa.style.height = Math.round(t.h * s + borda) + "px";
+    if (!t.iframe) criarPrevia(t);
+    t.iframe.style.transform = "scale(" + s + ")";
+  }
+  aj.telas = [
+    { disp: "celular", w: 390, h: 740, caixa: $(".aj[data-disp=celular] .aj-previa") },
+    { disp: "computador", w: 1366, h: 768, caixa: $(".aj[data-disp=computador] .aj-previa") }
+  ];
+  if (window.ResizeObserver) {
+    /* a mudança de altura fica para o próximo quadro (fora da entrega do observador): mudar a caixa observada dentro
+       dele causava o aviso "ResizeObserver loop completed with undelivered notifications" */
+    var ajQuadro = 0;
+    var ajObs = new ResizeObserver(function () {
+      cancelAnimationFrame(ajQuadro);
+      ajQuadro = requestAnimationFrame(function () { aj.telas.forEach(escalar); });
+    });
+    aj.telas.forEach(function (t) { ajObs.observe(t.caixa); });
+  } else {
+    window.addEventListener("resize", function () { aj.telas.forEach(escalar); });
+    $$(".abas button, #aj-ver button").forEach(function (b) { b.addEventListener("click", function () { setTimeout(function () { aj.telas.forEach(escalar); }, 0); }); });
+  }
+  window.addEventListener("message", function (e) {
+    var d = e.data;
+    if (e.origin !== SITE_ORIGEM || !d || d.tipo !== "am2027-capa-pronto") return;
+    aj.telas.forEach(function (t) { if (t.iframe && e.source === t.iframe.contentWindow) { t.pronto = true; enviarPrevia(t); } });
+  });
+
+  /* celular: um aparelho por vez (botões Celular / Computador); computador: os dois lado a lado */
+  $$("#aj-ver button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      $("#aj-grade").dataset.ver = b.dataset.ver;
+      $$("#aj-ver button").forEach(function (x) { x.setAttribute("aria-pressed", x === b ? "true" : "false"); });
+    });
+  });
+
+  async function gravarAjuste(novoAjuste) {
+    var atual = (await lerConfig("fotos")) || {};
+    var valor = Object.assign({ capa: null, local: null }, atual);
+    if (novoAjuste) valor.capa_ajuste = novoAjuste; else delete valor.capa_ajuste;
+    await gravarConfig("fotos", valor);
+    estado.fotos = { capa: valor.capa || null, local: valor.local || null };
+    aj.salvo = novoAjuste ? JSON.parse(JSON.stringify(novoAjuste)) : null;
+    aj.mexido = false;
+    desenharFotos(); desenharAjuste();
+  }
+  var ajCaixa = $("#capa-ajuste");
+  $("#aj-salvar").addEventListener("click", async function () {
+    var btn = this, novo = limparAjuste(aj.valores);
+    if (!novo) return;
+    aviso(ajCaixa, "", ""); ocupado(btn, "Salvando...");
+    try {
+      await gravarAjuste(novo);
+      aviso(ajCaixa, "ok", "Ajuste salvo! Ele já vale no site (recarregue a página do site para ver).");
+    } catch (e) { aviso(ajCaixa, "erro", msgErro(e)); }
+    ocupado(btn);
+  });
+  $("#aj-padrao").addEventListener("click", async function () {
+    var btn = this;
+    aviso(ajCaixa, "", "");
+    if (!aj.salvo) {
+      /* nada salvo: só volta os controles */
+      aj.mexido = false; desenharAjuste();
+      aviso(ajCaixa, "ok", "Os controles voltaram ao enquadramento padrão.");
+      return;
+    }
+    if (!confirm("Voltar a foto da capa ao enquadramento padrão do site?")) return;
+    ocupado(btn, "Salvando...");
+    try {
+      await gravarAjuste(null);
+      aviso(ajCaixa, "ok", "Pronto: a capa voltou ao enquadramento padrão.");
+    } catch (e) { aviso(ajCaixa, "erro", msgErro(e)); }
+    ocupado(btn);
+  });
+  desenharAjuste();
 
   /* visitas */
   var fmtDia = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", timeZone: "UTC" });
@@ -1286,11 +1586,13 @@
     return l == null ? p + (p === 1 ? " pago" : " pagos") + ", ilimitada" : p + " de " + l + (l === 1 ? " pago" : " pagos");
   }
   function estadoPixCotas() {
-    var ok = pixAtual && pixAtual.chave;
+    var pix = !!(pixAtual && pixAtual.chave);
+    var online = !!(estado.cfgPagamento && estado.cfgPagamento.online === true);
     var p = $("#cotas-pix-estado");
-    p.textContent = ok ? "Pix cadastrado: as cotas aparecem no site prontas para presentear."
-                       : "Sem chave Pix cadastrada (aba Pix): as cotas aparecem no site como \"em breve\" e o link da lista do casar.com continua.";
-    p.style.color = ok ? "var(--ok)" : "var(--err)";
+    p.textContent = online ? "Pagamento online ligado (aba Pagamentos): as cotas aparecem no site prontas para presentear pelo Mercado Pago."
+                  : pix ? "Pix cadastrado: as cotas aparecem no site prontas para presentear."
+                  : "Sem chave Pix (aba Pix) e com o pagamento online desligado: as cotas aparecem no site como \"em breve\".";
+    p.style.color = online || pix ? "var(--ok)" : "var(--err)";
   }
   async function carregarCotas() {
     var r = await sb.from("presentes").select("*").order("ordem", { ascending: true }).order("criado_em", { ascending: true });
@@ -1604,6 +1906,7 @@
       var alterado = manterEdicao && formPgAlterado();
       var v = (await lerConfig("pagamento")) || {};
       estado.cfgPagamento = v;
+      estadoPixCotas();
       if (alterado) { estadoOnline(); return; }  /* não apagar o que o admin digitou e ainda não salvou */
       var f = fPg.elements;
       f.online.checked = v.online === true;
@@ -1629,7 +1932,7 @@
       await gravarConfig("pagamento", novo);
       estado.cfgPagamento = novo;
       f.taxa_pix.value = taxaTxt(tp); f.taxa_cartao.value = taxaTxt(tc);
-      estadoOnline();
+      estadoOnline(); estadoPixCotas();
       aviso(fPg, "ok", "Salvo. Pagamento online " + (online ? "ligado" : "desligado") + "; taxas: Pix " + taxaTxt(tp) + "%, cartão " + taxaTxt(tc) + "%.");
     } catch (err) { aviso(fPg, "erro", msgErro(err)); }
     ocupado(btn);
