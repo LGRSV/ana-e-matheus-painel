@@ -164,6 +164,18 @@
   .item .valor{font-weight:700; font-size:15px; color:var(--ink)}
   .cota-img{display:grid; gap:8px}
   .cota-img img{width:100%; max-width:320px; aspect-ratio:4 / 3; object-fit:cover; border-radius:10px; background:var(--bg2)}
+  .soltar{border:2px dashed var(--line); border-radius:14px; padding:14px; display:grid; justify-items:center; gap:8px; text-align:center; cursor:pointer; background:var(--bg); transition:border-color .15s, background .15s}
+  .soltar:hover, .soltar:focus-visible{border-color:var(--accent); outline:none}
+  .soltar.sobre{border-style:solid; border-color:var(--accent); background:var(--bg2)}
+  .soltar .soltar-txt{margin:0; font-weight:600; font-size:14px}
+  .thumb-drop{position:relative; width:84px; height:63px; flex:none; border-radius:8px; border:2px dashed var(--line); background:var(--bg2); overflow:hidden; cursor:pointer; display:grid; place-items:center; font-size:11px; line-height:1.2; color:var(--soft); text-align:center; padding:0}
+  .thumb-drop:hover, .thumb-drop:focus-visible{border-color:var(--accent); outline:none}
+  .thumb-drop.sobre{border-style:solid; border-color:var(--accent); box-shadow:0 0 0 3px rgba(0,0,0,.08)}
+  .thumb-drop .thumb{position:absolute; inset:0; width:100%; height:100%; border-radius:0}
+  .thumb-drop .thumb-st{position:absolute; left:0; right:0; bottom:0; background:rgba(0,0,0,.72); color:#fff; font-size:11px; padding:2px 0}
+  .foto-msg{font-size:12px; margin:4px 0 0; color:var(--soft)}
+  .foto-msg.erro{color:var(--err)}
+  .foto-msg.ok{color:var(--ok)}
 
   .cartao-claro{background:#fff; border:1px solid var(--line); border-radius:14px; padding:16px; margin-bottom:12px}
   .cartao-claro h3 small{font-weight:500; color:var(--soft)}
@@ -357,13 +369,18 @@
         <p class="nota" id="cota-pagos">Quantas pessoas podem pagar esta cota pelo pagamento online. Ao atingir o limite, ela aparece como esgotada no site.</p>
         <label>Descrição curta (opcional)<textarea name="descricao" maxlength="200" placeholder="Até 200 caracteres"></textarea></label>
         <div class="cota-img">
-          <img id="cota-previa" alt="Imagem da cota" hidden>
-          <p class="nota" id="cota-img-estado">Sem imagem (opcional).</p>
+          <div class="soltar" id="cota-soltar" tabindex="0" role="button" aria-label="Foto do presente: arraste, cole ou toque para escolher">
+            <img id="cota-previa" alt="Imagem da cota" hidden>
+            <p class="soltar-txt">Arraste a foto aqui, cole (Ctrl+V) ou toque para escolher</p>
+            <p class="nota" id="cota-img-estado">Sem imagem (opcional). Aceita JPG, PNG, WEBP e HEIC.</p>
+          </div>
           <div class="linha">
             <button class="btn peq" type="button" id="cota-escolher">Escolher imagem</button>
+            <button class="btn peq" type="button" id="cota-colar">Colar imagem</button>
             <button class="btn perigo peq" type="button" id="cota-tirar-img" hidden>Tirar imagem</button>
           </div>
           <input type="file" id="cota-arquivo" accept="image/*" hidden>
+          <input type="file" id="cota-arquivo-lista" accept="image/*" hidden>
         </div>
         <p class="aviso" role="alert" hidden></p>
         <div class="linha">
@@ -1642,13 +1659,15 @@
       var qtd = estado.intencoes.filter(function (i) { return i.presente_id === c.id; }).length;
       alvo.appendChild(h("article", { class: "item" },
         h("div", { class: "cab" },
-          c.imagem ? h("img", { class: "thumb", src: c.imagem, alt: "" }) : null,
+          miniaturaCota(c),
           h("div", { class: "nome" }, c.nome, h("div", { class: "valor", text: moeda(c.valor) })),
           cotaEsgotada(c) ? h("span", { class: "selo nao", text: "Esgotada" }) : null),
         c.descricao ? h("div", { class: "msg", text: c.descricao }) : null,
+        h("p", { class: "foto-msg", role: "status", "data-msg": c.id }),
         h("div", { class: "det" }, h("span", { text: textoPagos(c) })),
         h("div", { class: "pe" },
           h("span", { text: "Ordem " + c.ordem + (qtd ? " · " + qtd + (qtd === 1 ? " intenção" : " intenções") : "") }),
+          h("button", { class: "btn peq", type: "button", text: "Foto", onclick: function () { fotoListaAlvo = c; var i = $("#cota-arquivo-lista"); i.value = ""; i.click(); } }),
           h("button", { class: "btn peq", type: "button", text: "Editar", onclick: function () { abrirFormCota(c); } }),
           h("button", { class: "btn perigo peq", type: "button", text: "Apagar", onclick: function () { apagarCota(c, this); } }))
       ));
@@ -1658,7 +1677,7 @@
     var src = cotaImg.previa || cotaImg.url, img = $("#cota-previa");
     if (src) { img.src = src; img.hidden = false; } else { img.hidden = true; img.removeAttribute("src"); }
     $("#cota-img-estado").textContent = cotaImg.blob ? "Imagem nova: " + Math.round(cotaImg.blob.size / 1024) + " KB (enviada ao salvar)."
-      : (cotaImg.url ? "Imagem atual." : "Sem imagem (opcional).");
+      : (cotaImg.url ? "Imagem atual." : "Sem imagem (opcional). Aceita JPG, PNG, WEBP e HEIC.");
     $("#cota-tirar-img").hidden = !src;
   }
   function limparImgCota() {
@@ -1699,18 +1718,186 @@
   $("#abrir-cota").addEventListener("click", function () { abrirFormCota(null); });
   $("#cancelar-cota").addEventListener("click", function () { limparImgCota(); fCota.reset(); fCota.hidden = true; cotaEditando = null; });
   $("#atualizar-cotas").addEventListener("click", function () { carregarIntencoes().then(carregarCotas); });
-  $("#cota-escolher").addEventListener("click", function () { $("#cota-arquivo").value = ""; $("#cota-arquivo").click(); });
-  $("#cota-arquivo").addEventListener("change", async function () {
-    var arq = this.files && this.files[0];
-    if (!arq) return;
-    var b = $("#cota-escolher"); ocupado(b, "Preparando...");
+  /* --- foto da cota: escolher, arrastar, colar (formulário e miniatura da lista) --- */
+  var MAX_ARQ = 25 * 1024 * 1024, fotoListaAlvo = null, ocupadasLista = {};
+  var MSG_FORMATO = "Use uma imagem JPG, PNG, WEBP ou HEIC.";
+  function tipoImagemOk(f) {
+    var t = String(f.type || "").toLowerCase();
+    if (t) return /^image\/(jpeg|png|webp|heic|heif)$/.test(t);
+    return /\.(jpe?g|png|webp|heic|heif)$/i.test(f.name || "");
+  }
+  function validarArquivoImagem(f) {
+    if (!tipoImagemOk(f)) throw new Error(MSG_FORMATO);
+    if (f.size > MAX_ARQ) throw new Error("Imagem grande demais (máximo 25 MB).");
+    return f;
+  }
+  /* lê o DataTransfer na hora (ele esvazia depois do evento): arquivos e, se não houver, um link */
+  function lerTransferencia(dt) {
+    var out = { files: [], url: null };
+    if (!dt) return out;
+    if (dt.files) for (var i = 0; i < dt.files.length; i++) out.files.push(dt.files[i]);
+    if (!out.files.length && dt.items) for (var j = 0; j < dt.items.length; j++) {
+      if (dt.items[j].kind === "file") { var f = dt.items[j].getAsFile(); if (f) out.files.push(f); }
+    }
+    if (!out.files.length) {
+      var u = "", html = "";
+      try { u = (dt.getData("text/uri-list") || "").split(/\r?\n/).filter(function (l) { return l && l[0] !== "#"; })[0] || ""; } catch (e) {}
+      if (!u) { try { html = dt.getData("text/html") || ""; } catch (e) {} var m = html.match(/<img[^>]+src=["']([^"']+)["']/i); if (m) u = m[1]; }
+      if (!u) { try { var tx = (dt.getData("text/plain") || "").trim(); if (/^https?:\/\/\S+$/i.test(tx)) u = tx; } catch (e) {} }
+      if (/^(https?:|data:image\/)/i.test(u)) out.url = u;
+    }
+    return out;
+  }
+  async function arquivoDaTransferencia(t) {
+    if (t.files.length) {
+      var ok = t.files.filter(tipoImagemOk)[0];
+      if (!ok) throw new Error(MSG_FORMATO);
+      return validarArquivoImagem(ok);
+    }
+    if (t.url) {
+      var blob;
+      try {
+        var r = await fetch(t.url);
+        if (!r.ok) throw new Error("http");
+        blob = await r.blob();
+      } catch (e) { throw new Error("Não consegui pegar a imagem desse link. Salve a imagem no aparelho ou copie e cole."); }
+      return validarArquivoImagem(new File([blob], "imagem", { type: blob.type || "" }));
+    }
+    return null;
+  }
+  async function arquivoDaAreaDeTransferencia() {
+    if (!(navigator.clipboard && navigator.clipboard.read)) throw new Error("Este navegador não deixa colar por botão. Use Ctrl+V ou Escolher imagem.");
+    var itens;
+    try { itens = await navigator.clipboard.read(); }
+    catch (e) { throw new Error("Não consegui ler a área de transferência. Permita o acesso ou use Ctrl+V."); }
+    for (var i = 0; i < itens.length; i++) {
+      var tp = itens[i].types.filter(function (x) { return x.indexOf("image/") === 0; })[0];
+      if (tp) { var b = await itens[i].getType(tp); return validarArquivoImagem(new File([b], "colada", { type: b.type })); }
+    }
+    throw new Error("Não há imagem copiada. Copie uma imagem e tente de novo.");
+  }
+
+  /* formulário */
+  async function receberArquivoForm(promessa) {
+    var b = $("#cota-escolher"); ocupado(b, "Preparando..."); aviso(fCota, "", "");
     try {
+      var arq = await promessa;
+      if (!arq) return;
       var r = await reduzir(arq, 900);
       if (cotaImg.previa) URL.revokeObjectURL(cotaImg.previa);
       cotaImg.blob = r.blob; cotaImg.previa = URL.createObjectURL(r.blob);
       previaCota();
     } catch (e) { aviso(fCota, "erro", e.message || "Não consegui abrir a imagem."); }
     ocupado(b);
+  }
+  function abrirEscolherForm() { $("#cota-arquivo").value = ""; $("#cota-arquivo").click(); }
+  var caixaSoltar = $("#cota-soltar");
+  $("#cota-escolher").addEventListener("click", abrirEscolherForm);
+  caixaSoltar.addEventListener("click", abrirEscolherForm);
+  caixaSoltar.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirEscolherForm(); } });
+  $("#cota-colar").addEventListener("click", function () { receberArquivoForm(arquivoDaAreaDeTransferencia()); });
+  $("#cota-arquivo").addEventListener("change", function () {
+    var arq = this.files && this.files[0];
+    if (arq) receberArquivoForm(Promise.resolve().then(function () { return validarArquivoImagem(arq); }));
+  });
+  function ligarSoltar(el, aoSoltar) {
+    var n = 0;
+    el.addEventListener("dragenter", function (e) { e.preventDefault(); n++; el.classList.add("sobre"); });
+    el.addEventListener("dragover", function (e) { e.preventDefault(); if (e.dataTransfer) e.dataTransfer.dropEffect = "copy"; el.classList.add("sobre"); });
+    el.addEventListener("dragleave", function () { n = Math.max(0, n - 1); if (!n) el.classList.remove("sobre"); });
+    el.addEventListener("drop", function (e) {
+      e.preventDefault(); e.stopPropagation(); n = 0; el.classList.remove("sobre");
+      aoSoltar(lerTransferencia(e.dataTransfer));
+    });
+  }
+  ligarSoltar(caixaSoltar, function (t) {
+    if (!t.files.length && !t.url) { aviso(fCota, "erro", "Não encontrei uma imagem. Salve a imagem no aparelho ou copie e cole."); return; }
+    receberArquivoForm(arquivoDaTransferencia(t));
+  });
+  /* soltar fora da caixa não pode abrir a imagem e tirar o painel da tela */
+  ["dragover", "drop"].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }); });
+
+  /* lista: miniatura que recebe a foto e já salva */
+  async function subirImagemCota(blob) {
+    var ext = blob.type === "image/webp" ? "webp" : "jpg";
+    var arq = "cota-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
+    var up = await sb.storage.from("fotos").upload(arq, blob, { contentType: blob.type, cacheControl: "31536000", upsert: false });
+    if (up.error) throw up.error;
+    var url = sb.storage.from("fotos").getPublicUrl(arq).data.publicUrl;
+    if (url.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da imagem.");
+    return url;
+  }
+  function msgCota(id, tipo, txt, ms) {
+    var el = document.querySelector('[data-msg="' + id + '"]');
+    if (!el) return;
+    el.className = "foto-msg " + (tipo || ""); el.textContent = txt || "";
+    if (ms) setTimeout(function () { if (el.textContent === txt) { el.textContent = ""; el.className = "foto-msg"; } }, ms);
+  }
+  function estadoMiniatura(id, txt) {
+    var el = document.querySelector('[data-thumb="' + id + '"]');
+    if (!el) return;
+    var st = $(".thumb-st", el);
+    if (!txt) { if (st) st.remove(); return; }
+    if (!st) { st = h("span", { class: "thumb-st" }); el.appendChild(st); }
+    st.textContent = txt;
+  }
+  async function enviarFotoCota(c, promessa) {
+    if (ocupadasLista[c.id]) return;
+    ocupadasLista[c.id] = true;
+    msgCota(c.id, "", ""); estadoMiniatura(c.id, "enviando…");
+    try {
+      var arq = await promessa;
+      if (!arq) throw new Error("Não encontrei uma imagem. Salve a imagem no aparelho ou copie e cole.");
+      var r = await reduzir(arq, 900);
+      var url = await subirImagemCota(r.blob);
+      var antiga = c.imagem;
+      var res = await sb.from("presentes").update({ imagem: url, atualizado_em: new Date().toISOString() }).eq("id", c.id).select().single();
+      if (res.error) { sb.storage.from("fotos").remove([nomeArquivo(url)]).catch(function () {}); throw res.error; }
+      if (antiga && antiga !== url && nomeArquivo(antiga)) sb.storage.from("fotos").remove([nomeArquivo(antiga)]).catch(function () {});
+      c.imagem = url;
+      if (cotaEditando && cotaEditando.id === c.id) { cotaEditando.imagem = url; if (!cotaImg.blob) { cotaImg.url = url; previaCota(); } }
+      var el = document.querySelector('[data-thumb="' + c.id + '"]');
+      if (el) {
+        var im = $("img", el);
+        if (!im) { im = h("img", { class: "thumb", alt: "" }); el.insertBefore(im, el.firstChild); var rot = $(".thumb-vazio", el); if (rot) rot.remove(); }
+        im.src = url;
+      }
+      estadoMiniatura(c.id, "salvo");
+      msgCota(c.id, "ok", "Foto salva.", 3000);
+      setTimeout(function () { estadoMiniatura(c.id, ""); }, 2000);
+    } catch (e) {
+      estadoMiniatura(c.id, "");
+      msgCota(c.id, "erro", msgErro(e), 8000);
+    }
+    delete ocupadasLista[c.id];
+  }
+  function miniaturaCota(c) {
+    var el = h("button", { class: "thumb-drop", type: "button", "data-thumb": c.id, title: "Solte uma imagem aqui, ou clique e cole (Ctrl+V)", "aria-label": "Foto de " + c.nome + ": solte uma imagem ou clique e cole" },
+      c.imagem ? h("img", { class: "thumb", src: c.imagem, alt: "" }) : h("span", { class: "thumb-vazio", text: "Solte ou cole a foto" }));
+    el.addEventListener("click", function () { el.focus(); msgCota(c.id, "", "Selecionada: agora cole (Ctrl+V) ou solte uma imagem.", 6000); });
+    ligarSoltar(el, function (t) {
+      if (!t.files.length && !t.url) { msgCota(c.id, "erro", "Não encontrei uma imagem. Salve a imagem no aparelho ou copie e cole.", 8000); return; }
+      enviarFotoCota(c, arquivoDaTransferencia(t));
+    });
+    return el;
+  }
+  $("#cota-arquivo-lista").addEventListener("change", function () {
+    var arq = this.files && this.files[0], c = fotoListaAlvo;
+    if (arq && c) enviarFotoCota(c, Promise.resolve().then(function () { return validarArquivoImagem(arq); }));
+  });
+
+  /* Ctrl+V: miniatura em foco da lista, ou o formulário aberto */
+  document.addEventListener("paste", function (e) {
+    var t = lerTransferencia(e.clipboardData);
+    if (!t.files.length && !t.url) return;
+    var ativo = document.activeElement, mini = ativo && ativo.closest ? ativo.closest("[data-thumb]") : null;
+    var emTexto = ativo && /^(INPUT|TEXTAREA)$/.test(ativo.tagName);
+    if (mini) {
+      var c = estado.cotas.filter(function (x) { return String(x.id) === mini.getAttribute("data-thumb"); })[0];
+      if (c) { e.preventDefault(); enviarFotoCota(c, arquivoDaTransferencia(t)); }
+    } else if (!fCota.hidden && !(emTexto && !t.files.length)) {
+      e.preventDefault(); receberArquivoForm(arquivoDaTransferencia(t));
+    }
   });
   $("#cota-tirar-img").addEventListener("click", function () { limparImgCota(); previaCota(); });
   fCota.addEventListener("submit", async function (e) {
@@ -1732,12 +1919,7 @@
     aviso(fCota, "", ""); ocupado(btn, "Salvando...");
     try {
       if (cotaImg.blob) {
-        var ext = cotaImg.blob.type === "image/webp" ? "webp" : "jpg";
-        var arq = "cota-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8) + "." + ext;
-        var up = await sb.storage.from("fotos").upload(arq, cotaImg.blob, { contentType: cotaImg.blob.type, cacheControl: "31536000", upsert: false });
-        if (up.error) throw up.error;
-        linha.imagem = sb.storage.from("fotos").getPublicUrl(arq).data.publicUrl;
-        if (linha.imagem.indexOf(FOTOS_PUB) !== 0) throw new Error("Endereço inesperado da imagem.");
+        linha.imagem = await subirImagemCota(cotaImg.blob);
       }
       var r = cotaEditando
         ? await sb.from("presentes").update(linha).eq("id", cotaEditando.id).select().single()
