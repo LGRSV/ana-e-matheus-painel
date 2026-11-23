@@ -201,6 +201,11 @@
 
   /* pagamentos online */
   .selo.esp{background:#f6efe2; color:#7a5a1e}
+  .selo.livre{background:#e8eef6; color:#2f4f7a}
+  .painel-form .chave{display:flex; align-items:flex-start; gap:10px; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--bg2); cursor:pointer}
+  .chave input{width:20px; height:20px; margin:2px 0 0; flex:none; accent-color:var(--accent)}
+  .chave b{display:block; font-weight:600}
+  .chave small{display:block; margin-top:2px; font-size:12px; color:var(--soft); font-weight:400}
   .alerta{margin:0; padding:11px 13px; border-radius:10px; font-size:14px; line-height:1.45; background:var(--errbg); color:var(--err); font-weight:600}
   .painel-form .interruptor{display:flex; align-items:center; gap:12px; border:1px solid var(--line); border-radius:10px; padding:10px 12px; cursor:pointer; font-size:15px}
   .painel-form .interruptor input{-webkit-appearance:none; appearance:none; flex:none; width:46px; height:26px; min-height:0; padding:0; border:0; border-radius:999px;
@@ -357,7 +362,10 @@
       <div class="acoes">
         <button class="btn cheio peq" type="button" id="abrir-cota">+ Nova cota</button>
         <button class="btn peq" type="button" id="atualizar-cotas">Atualizar</button>
+        <button class="btn peq" type="button" id="livre-ligar-todos">Ligar valor livre em todos</button>
+        <button class="btn peq" type="button" id="livre-desligar-todos">Desligar em todos</button>
       </div>
+      <p class="nota" id="livre-estado" role="status" style="margin:6px 0 10px"></p>
       <form class="painel-form" id="f-cota" novalidate hidden>
         <h3 id="f-cota-titulo">Nova cota</h3>
         <label>Nome<input name="nome" maxlength="80" required placeholder="Ex.: Jantar na lua de mel"></label>
@@ -365,6 +373,8 @@
           <label>Valor (R$)<input name="valor" inputmode="decimal" maxlength="12" placeholder="150,00"></label>
           <label>Ordem no site<input name="ordem" type="number" inputmode="numeric" min="0" max="999" value="0"></label>
         </div>
+        <label class="chave"><input type="checkbox" name="valor_livre"><span><b>Valor livre (o convidado escolhe quanto dar)</b><small>No site, o convidado ajusta o valor antes de pagar. O valor acima vira o valor sugerido.</small></span></label>
+        <label id="rot-valor-minimo" hidden>Mínimo opcional (R$, vazio = R$ 10,00)<input name="valor_minimo" inputmode="decimal" maxlength="12" placeholder="10,00"></label>
         <label>Limite de pagamentos (vazio = ilimitada)<input name="limite" type="number" inputmode="numeric" min="1" max="999" placeholder="Ilimitada"></label>
         <p class="nota" id="cota-pagos">Quantas pessoas podem pagar esta cota pelo pagamento online. Ao atingir o limite, ela aparece como esgotada no site.</p>
         <label>Descrição curta (opcional)<textarea name="descricao" maxlength="200" placeholder="Até 200 caracteres"></textarea></label>
@@ -1660,7 +1670,8 @@
       alvo.appendChild(h("article", { class: "item" },
         h("div", { class: "cab" },
           miniaturaCota(c),
-          h("div", { class: "nome" }, c.nome, h("div", { class: "valor", text: moeda(c.valor) })),
+          h("div", { class: "nome" }, c.nome, h("div", { class: "valor", text: c.valor_livre ? "a partir de " + moeda(c.valor_minimo != null ? c.valor_minimo : 10) + " (sugerido " + moeda(c.valor) + ")" : moeda(c.valor) })),
+          c.valor_livre ? h("span", { class: "selo livre", text: "valor livre" }) : null,
           cotaEsgotada(c) ? h("span", { class: "selo nao", text: "Esgotada" }) : null),
         c.descricao ? h("div", { class: "msg", text: c.descricao }) : null,
         h("p", { class: "foto-msg", role: "status", "data-msg": c.id }),
@@ -1692,11 +1703,14 @@
       f.nome.value = c.nome; f.valor.value = Number(c.valor).toFixed(2).replace(".", ",");
       f.ordem.value = c.ordem; f.descricao.value = c.descricao || ""; cotaImg.url = c.imagem || null;
       f.limite.value = c.limite == null ? "" : c.limite;
+      f.valor_livre.checked = !!c.valor_livre;
+      f.valor_minimo.value = c.valor_minimo == null ? "" : Number(c.valor_minimo).toFixed(2).replace(".", ",");
     } else {
       f.ordem.value = estado.cotas.reduce(function (m, x) { return Math.max(m, x.ordem + 1); }, 0);
       f.limite.value = "";
     }
     cotaLimiteMexido = !!c;
+    mostrarMinimo();
     $("#cota-pagos").textContent = c
       ? "Pagamentos aprovados: " + textoPagos(c) + (cotaEsgotada(c) ? " (esgotada)." : ".") + " Ao atingir o limite, a cota aparece como esgotada no site."
       : "Quantas pessoas podem pagar esta cota pelo pagamento online. Ao atingir o limite, ela aparece como esgotada no site.";
@@ -1715,7 +1729,24 @@
   }
   fCota.elements.limite.addEventListener("input", function () { cotaLimiteMexido = true; });
   fCota.elements.valor.addEventListener("input", sugerirLimiteCota);
+  function mostrarMinimo() { $("#rot-valor-minimo").hidden = !fCota.elements.valor_livre.checked; }
+  fCota.elements.valor_livre.addEventListener("change", mostrarMinimo);
   $("#abrir-cota").addEventListener("click", function () { abrirFormCota(null); });
+  /* atalho: liga ou desliga o valor livre em todas as cotas (com confirmacao) */
+  async function valorLivreEmTodos(ligar, btn) {
+    var ids = estado.cotas.map(function (c) { return c.id; });
+    if (!ids.length) { $("#livre-estado").textContent = "Nenhuma cota para alterar."; return; }
+    if (!confirm((ligar ? "Ligar o valor livre em TODAS as " + ids.length + " cotas? O convidado passa a escolher quanto dar em cada uma (o valor atual vira o sugerido)."
+                        : "Desligar o valor livre em TODAS as " + ids.length + " cotas? Cada uma volta a ter o valor fixo.") )) return;
+    ocupado(btn, "Salvando...");
+    var r = await sb.from("presentes").update({ valor_livre: !!ligar, atualizado_em: new Date().toISOString() }).in("id", ids).select("id");
+    ocupado(btn);
+    if (r.error) { $("#livre-estado").textContent = msgErro(r.error); return; }
+    $("#livre-estado").textContent = "Valor livre " + (ligar ? "ligado" : "desligado") + " em " + (r.data ? r.data.length : ids.length) + " cotas.";
+    await carregarCotas();
+  }
+  $("#livre-ligar-todos").addEventListener("click", function () { valorLivreEmTodos(true, this); });
+  $("#livre-desligar-todos").addEventListener("click", function () { valorLivreEmTodos(false, this); });
   $("#cancelar-cota").addEventListener("click", function () { limparImgCota(); fCota.reset(); fCota.hidden = true; cotaEditando = null; });
   $("#atualizar-cotas").addEventListener("click", function () { carregarIntencoes().then(carregarCotas); });
   /* --- foto da cota: escolher, arrastar, colar (formulário e miniatura da lista) --- */
@@ -1906,6 +1937,11 @@
     var nome = f.nome.value.trim().replace(/\s+/g, " "), valor = lerValor(f.valor.value);
     if (nome.length < 2) { aviso(fCota, "erro", "Informe o nome da cota."); f.nome.focus(); return; }
     if (!(valor >= 1 && valor <= 50000)) { aviso(fCota, "erro", "Valor deve ficar entre R$ 1,00 e R$ 50.000,00 (ex.: 150,00)."); f.valor.focus(); return; }
+    var livre = f.valor_livre.checked, minimo = null;
+    if (livre && String(f.valor_minimo.value || "").trim()) {
+      minimo = lerValor(f.valor_minimo.value);
+      if (!(minimo >= 1 && minimo <= 50000)) { aviso(fCota, "erro", "O mínimo deve ficar entre R$ 1,00 e R$ 50.000,00 (ou vazio para R$ 10,00)."); f.valor_minimo.focus(); return; }
+    }
     var limTxt = String(f.limite.value || "").trim(), limite = null;
     if (limTxt) {
       limite = Number(limTxt);
@@ -1915,7 +1951,7 @@
     }
     var antiga = cotaEditando ? cotaEditando.imagem : null;
     var linha = { nome: nome.slice(0, 80), valor: valor, ordem: inteiro(f.ordem.value, 0, 999, 0), limite: limite,
-                  descricao: f.descricao.value.trim().slice(0, 200) || null, imagem: cotaImg.url, atualizado_em: new Date().toISOString() };
+                  descricao: f.descricao.value.trim().slice(0, 200) || null, imagem: cotaImg.url, valor_livre: livre, valor_minimo: livre ? minimo : null, atualizado_em: new Date().toISOString() };
     aviso(fCota, "", ""); ocupado(btn, "Salvando...");
     try {
       if (cotaImg.blob) {
