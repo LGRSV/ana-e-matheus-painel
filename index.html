@@ -568,6 +568,16 @@
     <section id="aba-site" hidden>
       <h2>Textos e limites do site</h2>
       <div class="textos">
+        <form class="painel-form" id="f-textos" novalidate>
+          <h3>Textos do site</h3>
+          <p class="nota">Os textos que aparecem na página inicial do site. Uma linha em branco separa parágrafos. Se apagar tudo de um campo, o site volta ao texto padrão.</p>
+          <label>Boas-vindas (início da página)<textarea name="inicio" maxlength="4000" rows="9"></textarea></label>
+          <label>Frase final das boas-vindas (em destaque)<input name="fecho" maxlength="300"></label>
+          <label>Cerimônia/Recepção<textarea name="recepcao" maxlength="4000" rows="5"></textarea></label>
+          <label>Lista de presentes (texto de abertura)<textarea name="presentes" maxlength="4000" rows="5"></textarea></label>
+          <p class="aviso" role="alert" hidden></p>
+          <div class="linha"><button class="btn cheio" type="submit">Salvar textos</button></div>
+        </form>
         <form class="painel-form" id="f-limites" novalidate>
           <h3>Confirmação de presença</h3>
           <p class="nota">Quantas pessoas cada confirmação pode informar no site. Aqui no painel você pode lançar qualquer número (até 20).</p>
@@ -2189,9 +2199,18 @@
   });
 
   /* textos e limites do site */
+  /* textos do site: estes são os mesmos textos padrão que estão no site (index.html do ana-e-matheus-2027) */
+  var TEXTOS_PADRAO = {
+    inicio: "Criamos esse site para compartilhar com vocês os detalhes da organização do nosso casamento. Estamos muito felizes e contamos com a presença de todos no nosso grande dia!\n\nAqui vocês poderão confirmar sua presença, lista de presentes e a localização do evento.\n\nÉ muito importante confirmar sua presença. Para isto contamos com sua ajuda clicando no menu “Confirme sua Presença” e preenchendo os dados necessários. Para nos presentear, escolha qualquer item da nossa lista de presentes de sua preferência. Fiquem à vontade!",
+    fecho: "Aguardamos vocês no nosso grande dia!",
+    recepcao: "Convidamos você pontualmente para nossa cerimônia no dia 07 de Janeiro de 2027, no restaurante Cabana do Lago, em Palmas, Tocantins.\n\nSerá pontualmente às 19:30h.",
+    presentes: "A sua presença é o mais importante para nós! Mas, se desejar nos abençoar, criamos uma lista de presentes online. Você pode escolher do conforto da sua casa a cota que preferir, e o valor será revertido para realização de nossos sonhos."
+  };
   async function carregarTextos() {
     try {
       var lim = (await lerConfig("rsvp")) || {}, casal = (await lerConfig("casal")) || {}, pad = (await lerConfig("padrinhos")) || {};
+      var tx = (await lerConfig("textos")) || {}, ft = $("#f-textos").elements;
+      ["inicio", "fecho", "recepcao", "presentes"].forEach(function (k) { ft[k].value = (typeof tx[k] === "string" && tx[k].trim()) ? tx[k] : TEXTOS_PADRAO[k]; });
       var fl = $("#f-limites").elements;
       fl.max_adultos.value = inteiro(lim.max_adultos, 1, 20, 10); fl.max_criancas.value = inteiro(lim.max_criancas, 0, 20, 10);
       $("#f-casal").elements.texto.value = casal.texto || "";
@@ -2210,6 +2229,10 @@
       ocupado(btn);
     });
   }
+  salvarTexto($("#f-textos"), "textos", function (f) {
+    function t(k, max) { return f[k].value.replace(/\r\n/g, "\n").trim().slice(0, max) || null; }
+    return { inicio: t("inicio", 4000), fecho: t("fecho", 300), recepcao: t("recepcao", 4000), presentes: t("presentes", 4000) };
+  }, function () { return "Textos salvos. Já aparecem no site (atualize a página do site para ver)."; });
   salvarTexto($("#f-limites"), "rsvp", function (f) {
     var a = parseInt(f.max_adultos.value, 10), c = parseInt(f.max_criancas.value, 10);
     if (!(a >= 1 && a <= 20)) return { erro: "Máximo de adultos: de 1 a 20." };
